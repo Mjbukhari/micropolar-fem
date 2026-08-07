@@ -1,0 +1,493 @@
+
+\documentclass[11pt,a4paper]{article}
+
+\input{macros}
+
+\title{Weak Formulations of Scalar Elliptic Problems:\\
+Boundedness, Coercivity, and How the Function Space Is Chosen}
+\author{M. Javed Bukhari}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+These notes work through three scalar elliptic boundary value problems. For each
+one I derive the weak formulation and then prove that the resulting bilinear form
+is bounded and coercive. Two things are worth watching. The first is that the
+function space is not chosen in advance --- it falls out of the weak formulation
+once we ask what is needed to make the integrals finite. The second is that
+boundedness and coercivity point in opposite directions and need different tools:
+boundedness is an upper bound on $a(u,v)$ and comes from Cauchy--Schwarz, while
+coercivity is a lower bound on $a(u,u)$ and comes from setting $v=u$ and then
+finding the weakest coefficient. The third problem is the microrotation equation
+of the micropolar system with the coupling switched off, so the last result here
+is used directly later on.
+\end{abstract}
+
+\tableofcontents
+
+%==============================================================================
+\section{Notation and assumptions}
+%==============================================================================
+
+Throughout, $\Om \subset \R^{n}$ is a bounded Lipschitz domain with boundary
+$\dOm$. All derivatives are weak derivatives. I write
+\[
+  \normL{u} = \left( \int_\Om \abs{u}^{2} \dx \right)^{1/2},
+  \qquad
+  \normH{u}^{2} = \normL{u}^{2} + \normL{\grad u}^{2},
+\]
+and $\Honezero$ for the closure of $\Cinfc$ in the $\Hone$ norm. When $n=1$ and
+$\Om=(0,1)$ I write $u'$ instead of $\grad u$.
+
+Two results are used over and over.
+
+\begin{lemma}[Cauchy--Schwarz]\label{lem:cs}
+For $u,v \in \Ltwo$,
+\[
+  \abs{\int_\Om uv \dx} \;\le\; \normL{u}\,\normL{v}.
+\]
+\end{lemma}
+
+\begin{lemma}[Poincar\'e--Friedrichs]\label{lem:poincare}
+There is a constant $C_\Om > 0$, depending only on $\Om$, with
+\[
+  \normL{u} \;\le\; C_\Om \normL{\grad u}
+  \qquad \text{for every } u \in \Honezero .
+\]
+\end{lemma}
+
+\begin{remark}\label{rem:poincare-fails}
+Lemma~\ref{lem:poincare} is false on $\Hone$. Take $u \equiv 1$. Then
+$\grad u = 0$, so the right-hand side is zero, but
+$\normL{u} = \abs{\Om}^{1/2} \neq 0$. What makes the inequality work on
+$\Honezero$ is that the boundary condition rules out non-zero constants. So the
+boundary condition is not a side detail. It is the hypothesis the whole existence
+theory rests on, and I come back to this point at the end of
+Section~\ref{sec:reaction}.
+\end{remark}
+
+\begin{remark}
+One consequence of Lemma~\ref{lem:poincare} is that $\normL{\grad \cdot}$ is
+itself a norm on $\Honezero$, equivalent to $\normH{\cdot}$. Many papers use it
+without saying so, which is confusing the first time you meet it.
+\end{remark}
+
+%==============================================================================
+\section{The one-dimensional model problem}
+%==============================================================================
+
+\subsection{From the strong form to the weak form}
+
+Take the two-point boundary value problem
+\begin{equation}\label{eq:strongA}
+  -u'' = f \quad \text{on } (0,1), \qquad u(0) = u(1) = 0 .
+\end{equation}
+
+Let $v$ be a test function with $v(0)=v(1)=0$. Multiply \eqref{eq:strongA} by $v$
+and integrate over $(0,1)$:
+\[
+  -\int_0^1 u'' v \dx = \int_0^1 f v \dx .
+\]
+Integrate the left-hand side by parts once:
+\[
+  -\int_0^1 u'' v \dx
+  = -\Big[\, u' v \,\Big]_0^1 + \int_0^1 u' v' \dx
+  = \int_0^1 u' v' \dx ,
+\]
+where the boundary term drops out because $v(0)=v(1)=0$. It is worth being
+careful about which function is doing that work: it is $v$, not $u'$. There is no
+reason for $u'$ to vanish at the endpoints, and in general it does not.
+
+So the weak problem is: find $u \in H^1_0(0,1)$ with
+\begin{equation}\label{eq:weakA}
+  a(u,v) \;:=\; \int_0^1 u' v' \dx
+  \;=\; \int_0^1 f v \dx \;=:\; F(v)
+  \qquad \text{for all } v \in H^1_0(0,1).
+\end{equation}
+
+The trade we made is worth naming. The classical form needs two derivatives of
+$u$ and none of $v$; the weak form needs one of each. We gave away regularity of
+$v$, which costs nothing because we choose $v$ ourselves and can always choose it
+smooth, in order to buy back regularity of $u$, which is what we actually care
+about.
+
+\subsection{Why the space is $H^1_0$}
+\label{sec:space-choice}
+
+The classical formulation \eqref{eq:strongA} asks for $u \in C^{2}$. That demand
+comes from the way we wrote the equation down, not from the problem being
+modelled, and it throws away solutions that exist in reality. If $f$ has a jump
+--- a bar under a point load, or a change of material halfway along --- then no
+$C^{2}$ function satisfies \eqref{eq:strongA}. The bar still bends. So a theory
+built on $C^{2}$ would tell us there is no solution to a problem whose solution
+we can see.
+
+The weak form \eqref{eq:weakA} only involves $u'$, so the right space is found by
+asking what is needed for its integrals to make sense. By Lemma~\ref{lem:cs},
+$\int_0^1 u'v'$ is finite as soon as $u', v' \in L^{2}(0,1)$, and we needed
+$v(0)=v(1)=0$ to kill the boundary term. That gives
+\[
+  H^1_0(0,1) = \{\, u \in L^{2}(0,1) : u' \in L^{2}(0,1),\ u(0)=u(1)=0 \,\} .
+\]
+Note the direction of that argument. The space was built out of the requirement;
+it was not picked first and then imposed.
+
+The choice is squeezed from both sides. Go bigger --- drop the condition
+$u' \in L^{2}$ and work in $L^{2}(0,1)$ alone --- and $\int_0^1 u'v'$ may be
+infinite, so the equation stops meaning anything. Go smaller --- $C^{2}$, or
+$H^{2} \cap H^1_0$ --- and we are assuming more regularity than the formulation
+ever asked for, which throws out the point-load solution above. $H^1_0$ is the
+largest space on which \eqref{eq:weakA} still makes sense, and that is what makes
+it the right one.
+
+\begin{remark}
+In one dimension $H^{1}(0,1) \hookrightarrow C[0,1]$, so writing
+$u(0)=u(1)=0$ is fine. In two dimensions this needs more care, because $\dOm$
+has measure zero and $\Hone$ functions are only defined up to null sets. See
+Remark~\ref{rem:trace}.
+\end{remark}
+
+\subsection{Boundedness}
+
+\begin{proposition}\label{prop:boundA}
+For all $u,v \in H^1_0(0,1)$ we have $\abs{a(u,v)} \le \normH{u}\,\normH{v}$.
+\end{proposition}
+
+\begin{proof}
+Cauchy--Schwarz (Lemma~\ref{lem:cs}) applied to $u'$ and $v'$ gives
+\begin{equation}\label{eq:boundA1}
+  \abs{a(u,v)} = \abs{\int_0^1 u'v' \dx} \;\le\; \normL{u'}\,\normL{v'} .
+\end{equation}
+Now $\normH{u}^{2} = \normL{u}^{2} + \normL{u'}^{2}$ and $\normL{u}^{2} \ge 0$,
+so $\normL{u'}^{2} \le \normH{u}^{2}$, i.e.
+\begin{equation}\label{eq:boundA2}
+  \normL{u'} \le \normH{u},
+  \qquad \text{and in the same way} \qquad
+  \normL{v'} \le \normH{v}.
+\end{equation}
+Putting \eqref{eq:boundA1} and \eqref{eq:boundA2} together finishes it, with
+constant $C=1$.
+\end{proof}
+
+\begin{remark}
+Poincar\'e does not appear here, and it could not have. Boundedness needs the
+seminorm controlled by the full norm, $\normL{u'} \le \normH{u}$, which is free.
+Poincar\'e gives control in the opposite direction, $\normH{u} \lesssim
+\normL{u'}$, which is not free and is what coercivity needs. Two opposite
+directions, two different jobs. Mixing them up is the easiest mistake to make
+here, and I made it the first time.
+\end{remark}
+
+\subsection{Coercivity}
+
+\begin{proposition}\label{prop:coercA}
+For all $u \in H^1_0(0,1)$,
+\[
+  a(u,u) \;\ge\; \alpha \normH{u}^{2},
+  \qquad \alpha = \frac{1}{C_\Om^{2}+1} .
+\]
+\end{proposition}
+
+\begin{proof}
+Put $v=u$. This gives an identity, not an estimate:
+\begin{equation}\label{eq:coercA1}
+  a(u,u) = \int_0^1 (u')^{2} \dx = \normL{u'}^{2} .
+\end{equation}
+There is nothing to bound at this step --- $\int_0^1 (u')^{2}$ \emph{is}
+$\normL{u'}^{2}$, straight from the definition of the norm. This is why setting
+$v=u$ is the whole trick: Cauchy--Schwarz exists to handle two different
+functions, and with the same function twice there is nothing left to estimate.
+
+By Lemma~\ref{lem:poincare}, $\normL{u}^{2} \le C_\Om^{2}\normL{u'}^{2}$, so
+\begin{equation}\label{eq:coercA2}
+  \normH{u}^{2} = \normL{u}^{2} + \normL{u'}^{2}
+  \;\le\; C_\Om^{2}\normL{u'}^{2} + \normL{u'}^{2}
+  = \left( C_\Om^{2}+1 \right)\normL{u'}^{2} .
+\end{equation}
+Rearranging \eqref{eq:coercA2},
+\begin{equation}\label{eq:coercA3}
+  \normL{u'}^{2} \;\ge\; \frac{1}{C_\Om^{2}+1}\,\normH{u}^{2} ,
+\end{equation}
+and combining this with \eqref{eq:coercA1} gives the result.
+\end{proof}
+
+\begin{remark}[Sanity check]
+The constant is $\alpha = (C_\Om^{2}+1)^{-1}$, so $\alpha$ gets smaller as
+$C_\Om$ gets bigger, which means coercivity gets weaker on domains with a large
+Poincar\'e constant. Since $C_\Om$ grows with the size of $\Om$, this is saying
+something I find intuitive: on a long interval the two endpoint conditions do not
+constrain the function much, because a function with a small derivative still has
+room to wander a long way from zero in the middle. On a short interval the same
+two conditions clamp it. So $\alpha$ is measuring how hard the boundary condition
+is working, which lines up with Remark~\ref{rem:poincare-fails}.
+\end{remark}
+
+\subsection{Stability of the solution}
+
+\begin{proposition}\label{prop:stabA}
+Let $f \in L^{2}(0,1)$ and let $u \in H^1_0(0,1)$ solve \eqref{eq:weakA}. Then
+\[
+  \normH{u} \;\le\; \frac{1}{\alpha}\normL{f},
+  \qquad \alpha = \frac{1}{C_\Om^{2}+1} .
+\]
+\end{proposition}
+
+\begin{proof}
+Take $v=u$ in \eqref{eq:weakA}, so $a(u,u) = \int_0^1 fu \dx$. Bound the left
+side from below with Proposition~\ref{prop:coercA} and the right side from above
+with Lemma~\ref{lem:cs}:
+\[
+  \alpha\normH{u}^{2} \;\le\; a(u,u) = \int_0^1 fu \dx
+  \;\le\; \normL{f}\normL{u} \;\le\; \normL{f}\normH{u} .
+\]
+If $u=0$ there is nothing to prove. Otherwise divide by $\normH{u} > 0$.
+\end{proof}
+
+\begin{remark}
+This says: bounded data gives a bounded solution, with a constant we can write
+down. That is stability, and it is the continuous version of what we want from a
+numerical scheme --- that it should not amplify perturbations in the data. Worth
+noticing that it came from coercivity and not from boundedness. Coercivity is the
+property that does the real work; boundedness is a technical hypothesis that is
+almost always easy.
+\end{remark}
+
+%==============================================================================
+\section{The Dirichlet problem in two dimensions}
+%==============================================================================
+
+\subsection{From the strong form to the weak form}
+
+Now let $\Om \subset \R^{2}$ and take
+\begin{equation}\label{eq:strongB}
+  -\lap u = f \ \text{ in } \Om, \qquad u = 0 \ \text{ on } \dOm .
+\end{equation}
+
+The tool is Green's first identity: for $u \in \Htwo$ and $v \in \Hone$,
+\begin{equation}\label{eq:green}
+  \int_\Om (\lap u)\,v \dx
+  = \int_{\dOm} \dn{u}\,v \ds - \int_\Om \grad u \cdot \grad v \dx ,
+\end{equation}
+with $\dn{u} = \grad u \cdot \bn$ and $\bn$ the outward unit normal. This is
+integration by parts in $n$ dimensions, and it lines up term by term with the
+one-dimensional case: $\int_\Om (\lap u)v$ against $\int_0^1 u''v$, the boundary
+integral against the evaluation $[u'v]_0^1$, and
+$\int_\Om \grad u \cdot \grad v$ against $\int_0^1 u'v'$. In 1D the ``boundary''
+is two points and the outward normal derivative is $+u'(1)$ and $-u'(0)$, which
+is exactly what the square bracket computes.
+
+Multiply \eqref{eq:strongB} by $v \in \Honezero$, integrate over $\Om$, and apply
+\eqref{eq:green}:
+\[
+  -\int_\Om (\lap u)v \dx
+  = -\int_{\dOm} \dn{u}\,v \ds + \int_\Om \grad u \cdot \grad v \dx
+  = \int_\Om \grad u \cdot \grad v \dx ,
+\]
+the boundary integral vanishing because $v$ has zero trace. Again it is $v$ that
+does this, not $\dn{u}$.
+
+The weak problem: find $u \in \Honezero$ with
+\begin{equation}\label{eq:weakB}
+  a(u,v) := \int_\Om \grad u \cdot \grad v \dx
+  = \int_\Om fv \dx
+  \qquad \text{for all } v \in \Honezero ,
+\end{equation}
+where $\grad u \cdot \grad v
+= \partial_x u\,\partial_x v + \partial_y u\,\partial_y v$. In one dimension that
+sum has a single term and reads $u'v'$; in two dimensions it has two. That is the
+only change.
+
+\begin{remark}\label{rem:trace}
+``$v=0$ on $\dOm$'' cannot be read pointwise here. The boundary has measure zero
+in $\R^{2}$, and elements of $\Hone$ are equivalence classes modulo null sets, so
+the value of $v$ at any particular point is not well defined. The statement is
+made precise by the trace theorem: the restriction map
+$v \mapsto v\vert_{\dOm}$, defined on $C(\overline{\Om}) \cap \Hone$, extends to a
+bounded operator on $\Hone$, and $\Honezero$ is exactly the kernel of that
+operator. I am citing this, not proving it.
+\end{remark}
+
+\begin{remark}
+Identity \eqref{eq:green} needs $u \in \Htwo$ so that $\lap u$ is a function. That
+regularity is used only to \emph{get to} \eqref{eq:weakB} from
+\eqref{eq:strongB}. The weak problem itself only needs $u \in \Honezero$, and the
+analysis below is done there. Deriving under classical regularity and then
+dropping it is the standard order of business, and it is easy to be confused by
+it the first time.
+\end{remark}
+
+\subsection{Boundedness and coercivity}
+
+\begin{proposition}\label{prop:boundB}
+For all $u,v \in \Honezero$, $\abs{a(u,v)} \le \normH{u}\normH{v}$.
+\end{proposition}
+
+\begin{proof}
+Cauchy--Schwarz is used twice: once pointwise on the vectors $\grad u$ and
+$\grad v$, then once on the integral via Lemma~\ref{lem:cs}. That gives
+\[
+  \abs{a(u,v)} = \abs{\int_\Om \grad u \cdot \grad v \dx}
+  \le \int_\Om \abs{\grad u}\abs{\grad v} \dx
+  \le \normL{\grad u}\normL{\grad v} .
+\]
+Then $\normL{\grad u} \le \normH{u}$ and $\normL{\grad v} \le \normH{v}$, exactly
+as in \eqref{eq:boundA2}.
+\end{proof}
+
+\begin{proposition}\label{prop:coercB}
+For all $u \in \Honezero$, $a(u,u) \ge \alpha\normH{u}^{2}$ with
+$\alpha = (C_\Om^{2}+1)^{-1}$.
+\end{proposition}
+
+\begin{proof}
+Setting $v=u$ gives
+$a(u,u) = \int_\Om \abs{\grad u}^{2}\dx = \normL{\grad u}^{2}$. Poincar\'e holds
+on $\Honezero$ in any dimension, so
+\[
+  \normH{u}^{2} = \normL{u}^{2} + \normL{\grad u}^{2}
+  \le \left( C_\Om^{2}+1 \right)\normL{\grad u}^{2},
+\]
+and the rest is as in Proposition~\ref{prop:coercA}.
+\end{proof}
+
+\begin{remark}
+These two proofs are the one-dimensional ones with $u'$ replaced by $\grad u$,
+and the constants come out the same. The dimension could have caused trouble in
+two places --- the integration by parts, and the meaning of the boundary
+condition --- and both were dealt with by quoting a theorem (Green's identity,
+and the trace theorem). Neither changed the shape of the argument. The point of
+this section is that nothing new happens, which is itself worth knowing: the
+machinery is dimension-independent.
+\end{remark}
+
+%==============================================================================
+\section{The reaction--diffusion problem}
+\label{sec:reaction}
+%==============================================================================
+
+\subsection{From the strong form to the weak form}
+
+Let $c, \kappa > 0$ and take
+\begin{equation}\label{eq:strongC}
+  -c\,\lap u + \kappa u = f \ \text{ in } \Om, \qquad u = 0 \ \text{ on } \dOm .
+\end{equation}
+
+Multiply by $v \in \Honezero$ and integrate:
+\[
+  -c\int_\Om (\lap u)v \dx + \kappa\int_\Om uv \dx = \int_\Om fv \dx .
+\]
+Apply \eqref{eq:green} to the first term; its boundary contribution vanishes for
+the same reason as before. The second term is left alone --- there is no
+derivative in it, so there is nothing to integrate by parts. This gives: find
+$u \in \Honezero$ with
+\begin{equation}\label{eq:weakC}
+  a(u,v) := c\int_\Om \grad u \cdot \grad v \dx + \kappa\int_\Om uv \dx
+  = \int_\Om fv \dx
+  \qquad \text{for all } v \in \Honezero .
+\end{equation}
+
+\subsection{Coercivity, this time without Poincar\'e}
+
+\begin{proposition}\label{prop:coercC}
+For all $u \in \Honezero$,
+\[
+  a(u,u) \;\ge\; \min(c,\kappa)\,\normH{u}^{2} .
+\]
+\end{proposition}
+
+\begin{proof}
+Set $v=u$ in \eqref{eq:weakC}. As before this is an identity:
+\[
+  a(u,u) = c\int_\Om \abs{\grad u}^{2}\dx + \kappa\int_\Om u^{2}\dx
+  = c\,\normL{\grad u}^{2} + \kappa\,\normL{u}^{2} .
+\]
+Both pieces of $\normH{u}^{2}$ are already sitting there. The only difference is
+the coefficient in front of each. Replacing both coefficients by the smaller of
+the two,
+\[
+  a(u,u) \;\ge\; \min(c,\kappa)\left( \normL{\grad u}^{2} + \normL{u}^{2} \right)
+  = \min(c,\kappa)\,\normH{u}^{2}. \qedhere
+\]
+\end{proof}
+
+\begin{remark}
+Poincar\'e is never used. The zeroth-order term hands us $\normL{u}^{2}$ for
+free, and that is precisely the piece Poincar\'e had to manufacture in
+Propositions~\ref{prop:coercA} and \ref{prop:coercB}.
+\end{remark}
+
+\begin{remark}[Sanity check]
+As $\kappa \to 0$ the constant $\min(c,\kappa)$ goes to zero and this proof
+collapses. That is not a flaw in the proof --- it is the proof telling us which
+regime it belongs to. In that limit \eqref{eq:strongC} turns back into
+\eqref{eq:strongB}, which is still coercive, but only via Poincar\'e and
+therefore only via the boundary condition. So the two proofs are identifying two
+different mechanisms for controlling $\normL{u}^{2}$. When $\kappa>0$ the
+reaction term controls it directly and the boundary condition is not needed for
+that job. When $\kappa=0$ the boundary condition is all there is, and it acts
+through $C_\Om$. Something has to control $\normL{u}^{2}$; the question is only
+what.
+\end{remark}
+
+%==============================================================================
+\section{Summary}
+%==============================================================================
+
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Problem & Space & Coercivity constant & What supplies coercivity \\
+\midrule
+$-u''=f$ & $H^1_0(0,1)$ & $(C_\Om^{2}+1)^{-1}$ & Poincar\'e \\
+$-\lap u = f$ & $\Honezero$ & $(C_\Om^{2}+1)^{-1}$ & Poincar\'e \\
+$-c\lap u + \kappa u = f$ & $\Honezero$ & $\min(c,\kappa)$ & the reaction term \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+
+Two things to take away.
+
+First, in every case the space came out of the weak formulation rather than being
+chosen beforehand. The recipe was always the same: write the weak form, look at
+the integrals in it, and ask what the weakest condition on $u$ is that keeps them
+finite. Section~\ref{sec:space-choice} then argued that this space is optimal ---
+anything larger and the formulation stops making sense, anything smaller and we
+lose solutions that genuinely exist.
+
+Second, boundedness and coercivity are opposite kinds of statement and need
+different tools. Boundedness bounds $a(u,v)$ from above, with two independent
+arguments, and follows from Cauchy--Schwarz plus the free estimate
+$\normL{\grad u} \le \normH{u}$. Coercivity bounds $a(u,u)$ from below, with the
+same argument twice; setting $v=u$ produces an identity, and after that the only
+question is what bounds $\normH{u}^{2}$ in terms of what the identity gave us.
+Whether Poincar\'e is needed for that depends entirely on whether the equation
+has a zeroth-order term. Once these two are in hand, Lax--Milgram gives existence
+and uniqueness, which is the point of the whole exercise.
+
+%==============================================================================
+\section*{Where this connects to the micropolar problem}
+\addcontentsline{toc}{section}{Where this connects to the micropolar problem}
+%==============================================================================
+
+Problem \eqref{eq:strongC} is the microrotation equation of the two-dimensional
+stationary linear micropolar system,
+\[
+  -(c_a+c_d)\,\lap w + 4\nu_r\,w = 2\nu_r \curl \bu + g ,
+\]
+with the coupling term $2\nu_r \curl \bu$ switched off, so that $c = c_a+c_d$ and
+$\kappa = 4\nu_r$. Proposition~\ref{prop:coercC} therefore identifies the term
+that will have to absorb the indefinite coupling contribution when the full
+system is analysed.
+
+It also shows that the vortex viscosity $\nu_r$ enters the problem twice, and in
+competing ways: it supplies the zeroth-order term that helps coercivity, and it
+multiplies the coupling term that hurts it. Sorting out that competition ---
+which requires Young's inequality with a free parameter, chosen so that the
+coupling is absorbed without eating the terms that were controlling things ---
+is the subject of the next set of notes.
+
+\end{document}
