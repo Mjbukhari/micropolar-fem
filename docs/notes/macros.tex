@@ -1,1 +1,27 @@
+% Shared macros for the theory notes.
+% Include with \input{macros} after \begin{document} preamble packages.
 
+\newcommand{\Om}{\Omega}
+\newcommand{\dOm}{\partial\Omega}
+\newcommand{\dx}{\,\mathrm{d}x}
+\newcommand{\ds}{\,\mathrm{d}s}
+
+\newcommand{\Ltwo}{L^2(\Om)}
+\newcommand{\Ltwozero}{L^2_0(\Om)}
+\newcommand{\Hone}{H^1(\Om)}
+\newcommand{\Honezero}{H^1_0(\Om)}
+
+\newcommand{\normL}[1]{\left\lVert #1 \right\rVert_{L^2(\Om)}}
+\newcommand{\normH}[1]{\left\lVert #1 \right\rVert_{H^1(\Om)}}
+\newcommand{\ip}[2]{\left( #1 , #2 \right)}
+
+\newcommand{\grad}{\nabla}
+\newcommand{\lap}{\Delta}
+\newcommand{\dn}[1]{\frac{\partial #1}{\partial n}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
