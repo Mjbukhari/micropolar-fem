@@ -1,27 +1,59 @@
-% Shared macros for the theory notes.
-% Include with \input{macros} after \begin{document} preamble packages.
 
+\begin{document}
+%--- packages ----------------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+%--- domain and measures -----------------------------------------------------
 \newcommand{\Om}{\Omega}
 \newcommand{\dOm}{\partial\Omega}
 \newcommand{\dx}{\,\mathrm{d}x}
 \newcommand{\ds}{\,\mathrm{d}s}
+\newcommand{\R}{\mathbb{R}}
 
-\newcommand{\Ltwo}{L^2(\Om)}
-\newcommand{\Ltwozero}{L^2_0(\Om)}
-\newcommand{\Hone}{H^1(\Om)}
-\newcommand{\Honezero}{H^1_0(\Om)}
+%--- function spaces ---------------------------------------------------------
+\newcommand{\Ltwo}{L^{2}(\Om)}
+\newcommand{\Ltwozero}{L^{2}_{0}(\Om)}
+\newcommand{\Hone}{H^{1}(\Om)}
+\newcommand{\Honezero}{H^{1}_{0}(\Om)}
+\newcommand{\Htwo}{H^{2}(\Om)}
+\newcommand{\Cinfc}{C_{c}^{\infty}(\Om)}
 
-\newcommand{\normL}[1]{\left\lVert #1 \right\rVert_{L^2(\Om)}}
-\newcommand{\normH}[1]{\left\lVert #1 \right\rVert_{H^1(\Om)}}
+%--- norms and inner products ------------------------------------------------
+\newcommand{\normL}[1]{\left\lVert #1 \right\rVert_{L^{2}}}
+\newcommand{\normH}[1]{\left\lVert #1 \right\rVert_{H^{1}}}
 \newcommand{\ip}[2]{\left( #1 , #2 \right)}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
 
+%--- differential operators --------------------------------------------------
 \newcommand{\grad}{\nabla}
 \newcommand{\lap}{\Delta}
+\newcommand{\dive}{\operatorname{div}}
+\newcommand{\curl}{\operatorname{curl}}
 \newcommand{\dn}[1]{\frac{\partial #1}{\partial n}}
+\newcommand{\bn}{\mathbf{n}}
+\newcommand{\bu}{\mathbf{u}}
+\newcommand{\bv}{\mathbf{v}}
 
+%--- theorem environments ----------------------------------------------------
+\theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
 \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+
+\theoremstyle{remark}
 \newtheorem{remark}[theorem]{Remark}
+
+\begin{document}
