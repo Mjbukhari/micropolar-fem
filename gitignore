@@ -1,0 +1,30 @@
+# LaTeX build artefacts
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+
+# Keep compiled PDFs of the notes -- they are the deliverable
+!docs/notes/*.pdf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# FEniCS / output
+*.pvd
+*.vtu
+*.h5
+*.xdmf
+results/
+
+# OS
+.DS_Store
