@@ -1,0 +1,1004 @@
+%==============================================================================
+%  lesson02.tex
+%  Well-posedness of the linear stationary micropolar system
+%  Repository: micropolar-fem
+%  Author: M. Javed Bukhari
+%
+%  Requires macros.tex in the same folder.
+%  Compile with: pdflatex lesson02.tex   (run it twice, for the contents page)
+%==============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\input{macros}
+
+\title{Well-Posedness of the Linear Stationary Micropolar System\\
+on the Divergence-Free Space}
+\author{M. Javed Bukhari}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+In Lesson 1 I worked through three scalar elliptic problems and showed that
+boundedness and coercivity of the bilinear form are what give well-posedness.
+These notes carry the same programme through for a coupled system, namely the
+two dimensional stationary linear micropolar equations, restricted to
+divergence free velocity fields so that the pressure disappears from the
+formulation. The new difficulty is that the coupling terms have no sign, so
+they can work against coercivity, and the tool for dealing with them is Young's
+inequality with a free parameter. The main result is that coercivity holds with
+a constant that does not involve the vortex viscosity at all, while
+boundedness gives a constant that grows linearly in it. I explain at the end
+what that difference means for the numerical behaviour of the system, and why
+it is what one should expect physically.
+\end{abstract}
+
+\tableofcontents
+
+%==============================================================================
+\section{Results we will use}
+%==============================================================================
+
+Everything in these notes is built from the results collected here. I have
+stated them all in one place because the same few are used again and again, and
+it is easier to follow the argument if it is clear at every step which one is
+being applied. The first three are from Lesson 1. Lemmas
+\ref{lem:young}, \ref{lem:rot} and \ref{lem:curldiv} are new.
+
+Throughout, $\Om \subset \R^{2}$ is a bounded Lipschitz domain with boundary
+$\dOm$, all derivatives are weak derivatives, and I write
+$\partial_{1} = \partial/\partial x$ and $\partial_{2} = \partial/\partial y$.
+The $L^{2}$ inner product is
+\[
+  \ip{\phi}{\psi} = \int_\Om \phi \psi \dx
+  \qquad \text{or} \qquad
+  \ip{\boldsymbol\phi}{\boldsymbol\psi} = \int_\Om \boldsymbol\phi \cdot \boldsymbol\psi \dx
+\]
+depending on whether the arguments are scalars or vectors.
+
+\begin{lemma}[Cauchy--Schwarz]\label{lem:cs}
+For $\phi, \psi \in \Ltwo$,
+\[
+  \abs{\ip{\phi}{\psi}} \;\le\; \normL{\phi}\,\normL{\psi}.
+\]
+\end{lemma}
+
+\begin{lemma}[Poincar\'e--Friedrichs]\label{lem:poincare}
+There is a constant $C_\Om > 0$ depending only on $\Om$ such that
+\[
+  \normL{\phi} \;\le\; C_\Om \normL{\grad \phi}
+  \qquad \text{for every } \phi \in \Honezero .
+\]
+For a vector field $\bv \in [\Honezero]^{2}$ the same bound holds with the same
+constant, by applying it to each component and adding.
+\end{lemma}
+
+\begin{lemma}[Lax--Milgram]\label{lem:laxmilgram}
+Let $V$ be a Hilbert space and let $a : V \times V \to \R$ be bilinear with
+\[
+  \abs{a(u,v)} \le M \lVert u \rVert_{V} \lVert v \rVert_{V}
+  \qquad \text{and} \qquad
+  a(u,u) \ge \alpha \lVert u \rVert_{V}^{2}
+\]
+for some constants $M, \alpha > 0$. Let $F \in V'$ be a bounded linear
+functional. Then there is exactly one $u \in V$ with $a(u,v) = F(v)$ for all
+$v \in V$, and it satisfies $\lVert u \rVert_{V} \le \alpha^{-1} \lVert F
+\rVert_{V'}$.
+\end{lemma}
+
+\begin{lemma}[Young's inequality with a free parameter]\label{lem:young}
+For $a, b \in \R$ and any $\varepsilon > 0$,
+\[
+  \abs{ab} \;\le\; \frac{\varepsilon}{2} a^{2} + \frac{1}{2\varepsilon} b^{2}.
+\]
+\end{lemma}
+
+\begin{proof}
+Since squares are non-negative,
+\[
+  \left( \sqrt{\varepsilon}\, a - \frac{b}{\sqrt{\varepsilon}} \right)^{2} \ge 0 .
+\]
+Expanding the square,
+\[
+  \varepsilon a^{2} - 2ab + \frac{b^{2}}{\varepsilon} \ge 0 ,
+\]
+so $2ab \le \varepsilon a^{2} + \varepsilon^{-1} b^{2}$, and dividing by $2$
+gives the result for $ab$. Replacing $b$ by $-b$ gives the same bound for
+$-ab$, so the inequality holds for $\abs{ab}$.
+\end{proof}
+
+\begin{remark}[What the free parameter is for]\label{rem:whyeps}
+This is the tool I will use to handle the coupling terms, so it is worth being
+clear about what it does. Suppose an estimate produces a cross term $ab$ that we
+cannot control directly, but we do have squared terms $a^{2}$ and $b^{2}$
+available with known positive coefficients. Young's inequality converts the
+cross term into two squares, and the parameter $\varepsilon$ decides how the
+cost is split between them. Taking $\varepsilon$ small puts most of the cost on
+$b^{2}$ and very little on $a^{2}$. Taking $\varepsilon$ large does the
+opposite. So we choose $\varepsilon$ so that each piece is small enough to be
+swallowed by a term we already have. This is what is meant by absorbing a term,
+and it is the single most used move in this subject.
+\end{remark}
+
+For the next two results I use the following formula, which is just one
+dimensional integration by parts applied in the $x_{i}$ direction. For scalar
+functions $\phi, \psi$ and either index $i \in \{1,2\}$,
+\begin{equation}\label{eq:master}
+  \int_\Om (\partial_{i}\phi)\psi \dx
+  = \int_{\dOm} \phi \psi\, n_{i} \ds - \int_\Om \phi (\partial_{i}\psi) \dx ,
+\end{equation}
+where $n_{i}$ is the $i$th component of the outward unit normal. If either
+$\phi$ or $\psi$ vanishes on $\dOm$ the boundary term disappears and moving a
+derivative from one factor to the other costs a minus sign. Every identity
+below comes from \eqref{eq:master} applied one index at a time.
+
+In two dimensions we use the operators
+\[
+  \grad w = (\partial_{1}w,\ \partial_{2}w),
+  \qquad
+  \dive \bv = \partial_{1}v_{1} + \partial_{2}v_{2},
+\]
+\[
+  \curl \bv = \partial_{1}v_{2} - \partial_{2}v_{1},
+  \qquad
+  \grad^{\perp} w = (\partial_{2}w,\ -\partial_{1}w).
+\]
+The last two are special to two dimensions. In three dimensions the curl of a
+vector is a vector, but in two dimensions it has only one non-zero component so
+we treat it as a scalar. The operator $\grad^{\perp}$ is the gradient rotated
+by ninety degrees, and it turns a scalar into a vector. These two operators are
+how the micropolar system converts between the vector velocity and the scalar
+microrotation.
+
+\begin{lemma}[Rotation identity]\label{lem:rot}
+For $w \in \Honezero$ and $\bv \in [\Honezero]^{2}$,
+\[
+  \ip{\grad^{\perp} w}{\bv} = \ip{w}{\curl \bv}.
+\]
+\end{lemma}
+
+\begin{proof}
+Expanding the dot product into components,
+\[
+  \ip{\grad^{\perp} w}{\bv}
+  = \int_\Om \grad^{\perp} w \cdot \bv \dx
+  = \int_\Om (\partial_{2}w) v_{1} \dx - \int_\Om (\partial_{1}w) v_{2} \dx .
+\]
+Apply \eqref{eq:master} to each term with $\phi = w$, moving the derivative off
+$w$ and onto the component of $\bv$. The boundary terms vanish because $v_{1}$
+and $v_{2}$ have zero trace. This gives
+\[
+  \int_\Om (\partial_{2}w) v_{1} \dx = - \int_\Om w (\partial_{2}v_{1}) \dx,
+  \qquad
+  - \int_\Om (\partial_{1}w) v_{2} \dx = + \int_\Om w (\partial_{1}v_{2}) \dx .
+\]
+Adding,
+\[
+  \ip{\grad^{\perp} w}{\bv}
+  = \int_\Om w \left( \partial_{1}v_{2} - \partial_{2}v_{1} \right) \dx
+  = \int_\Om w \,\curl \bv \dx
+  = \ip{w}{\curl \bv}. \qedhere
+\]
+\end{proof}
+
+\begin{lemma}[Curl and divergence decomposition]\label{lem:curldiv}
+For $\bv \in [\Honezero]^{2}$,
+\[
+  \normL{\grad \bv}^{2} = \normL{\curl \bv}^{2} + \normL{\dive \bv}^{2} ,
+\]
+and consequently
+\[
+  \normL{\curl \bv} \le \normL{\grad \bv} .
+\]
+\end{lemma}
+
+\begin{proof}
+Write out all three quantities in components:
+\[
+  \normL{\grad \bv}^{2}
+  = \int_\Om \left[ (\partial_{1}v_{1})^{2} + (\partial_{2}v_{1})^{2}
+  + (\partial_{1}v_{2})^{2} + (\partial_{2}v_{2})^{2} \right] \dx ,
+\]
+\[
+  \normL{\curl \bv}^{2}
+  = \int_\Om \left[ (\partial_{1}v_{2})^{2}
+  - 2(\partial_{1}v_{2})(\partial_{2}v_{1}) + (\partial_{2}v_{1})^{2} \right] \dx ,
+\]
+\[
+  \normL{\dive \bv}^{2}
+  = \int_\Om \left[ (\partial_{1}v_{1})^{2}
+  + 2(\partial_{1}v_{1})(\partial_{2}v_{2}) + (\partial_{2}v_{2})^{2} \right] \dx .
+\]
+Adding the last two, the four squared terms are exactly those appearing in
+$\normL{\grad \bv}^{2}$, and what is left over is
+\begin{equation}\label{eq:leftover}
+  2\int_\Om (\partial_{1}v_{1})(\partial_{2}v_{2}) \dx
+  - 2\int_\Om (\partial_{1}v_{2})(\partial_{2}v_{1}) \dx .
+\end{equation}
+So the claim will follow once we show that the two integrals in
+\eqref{eq:leftover} are equal.
+
+Start from the first one and apply \eqref{eq:master} with $\phi = v_{2}$,
+$\psi = \partial_{1}v_{1}$ and $i = 2$, that is, move $\partial_{2}$ off
+$v_{2}$. The boundary term vanishes because $v_{2}$ has zero trace, so
+\[
+  \int_\Om (\partial_{1}v_{1})(\partial_{2}v_{2}) \dx
+  = - \int_\Om (\partial_{2}\partial_{1}v_{1}) v_{2} \dx .
+\]
+Since mixed partial derivatives commute we may write
+$\partial_{2}\partial_{1}v_{1} = \partial_{1}(\partial_{2}v_{1})$, so the
+integrand again has the form $(\partial_{1}\phi)\psi$ with
+$\phi = \partial_{2}v_{1}$ and $\psi = v_{2}$. Applying \eqref{eq:master} a
+second time, now with $i = 1$, and noting the boundary term vanishes for the
+same reason,
+\[
+  - \int_\Om \partial_{1}(\partial_{2}v_{1}) v_{2} \dx
+  = + \int_\Om (\partial_{2}v_{1})(\partial_{1}v_{2}) \dx .
+\]
+Chaining the two steps,
+\[
+  \int_\Om (\partial_{1}v_{1})(\partial_{2}v_{2}) \dx
+  = \int_\Om (\partial_{2}v_{1})(\partial_{1}v_{2}) \dx ,
+\]
+so \eqref{eq:leftover} is zero and the identity follows. Two applications of
+\eqref{eq:master} produce two minus signs, which cancel, and that is the whole
+proof.
+
+For the inequality, $\normL{\dive \bv}^{2} \ge 0$ because it is a squared norm,
+so dropping it from the right hand side can only make that side smaller:
+\[
+  \normL{\grad \bv}^{2} \ge \normL{\curl \bv}^{2} ,
+\]
+and taking square roots gives the claim.
+\end{proof}
+
+\begin{remark}
+The move at the end, discarding a non-negative summand to get an inequality, is
+the same one used in Lesson 1 to obtain $\normL{\grad \phi} \le \normH{\phi}$
+from $\normH{\phi}^{2} = \normL{\phi}^{2} + \normL{\grad \phi}^{2}$. It comes up
+constantly and is worth recognising on sight.
+\end{remark}
+
+%==============================================================================
+\section{The equations and what the terms mean}
+%==============================================================================
+
+\subsection{The model}
+
+The micropolar model, due to Eringen, describes a fluid whose suspended
+microstructure carries its own rotational degrees of freedom. Ordinary
+Navier--Stokes treats fluid particles as points with a velocity and nothing
+else. The micropolar model gives them a spin as well, and tracks it as a second
+field. It is used for blood, where the red cells rotate, for ferrofluids, for
+liquid crystals, and for lubricants with suspended additives.
+
+In two dimensions, in the stationary linear case, the system is
+\begin{align}
+  -(\nu + \nu_{r}) \lap \bu + \grad p
+    &= 2\nu_{r} \grad^{\perp} w + \mathbf{f} , \label{eq:mom} \\
+  \dive \bu &= 0 , \label{eq:incomp} \\
+  -(c_{a} + c_{d}) \lap w + 4\nu_{r} w
+    &= 2\nu_{r} \curl \bu + g , \label{eq:micro}
+\end{align}
+with $\bu = \mathbf{0}$ and $w = 0$ on $\dOm$. The unknowns are the velocity
+$\bu$, the pressure $p$, and the microrotation $w$, which is the angular
+velocity of the microstructure.
+
+\subsection{What each term is doing}
+
+It is worth going through the terms one at a time, because the whole point of
+the analysis is to find out how they interact, and that is much easier to follow
+if their meanings are already clear.
+
+\begin{itemize}
+
+\item $-(\nu + \nu_{r}) \lap \bu$ is viscous diffusion of momentum. The
+coefficient is the sum of two viscosities. The first, $\nu$, is the ordinary
+dynamic viscosity, the same one as in Navier--Stokes. The second, $\nu_{r}$, is
+called the vortex viscosity, and it is the extra resistance the fluid feels
+because the microstructure is there at all. Note that this term is where
+$\nu_{r}$ first appears, and it appears with a plus sign, so at this stage it
+looks like it can only help.
+
+\item $\grad p$ is the pressure gradient. Pressure enters the momentum equation
+only through its gradient, which will matter shortly.
+
+\item $2\nu_{r}\grad^{\perp} w$ is the first coupling term. It says that where
+the microstructure is spinning, that spin drags the bulk fluid along. This is a
+transfer of angular momentum from the microrotation field to the velocity field.
+
+\item $\dive \bu = 0$ is incompressibility.
+
+\item $-(c_{a} + c_{d}) \lap w$ is angular diffusion. Spin spreads out through
+the microstructure in the same way that momentum spreads out through the fluid.
+The constants $c_{a}$ and $c_{d}$ are angular viscosities, and they only ever
+appear in the combination $c_{a} + c_{d}$ in the two dimensional case, so I will
+treat that sum as a single positive constant.
+
+\item $4\nu_{r} w$ is a damping or reaction term. It says that spin decays. If
+the microstructure spins faster than the surrounding fluid rotates, friction
+slows it down. It is the only zeroth order term in the whole system, and it will
+turn out to be very important.
+
+\item $2\nu_{r} \curl \bu$ is the second coupling term, the mirror image of the
+first. Where the bulk fluid is rotating, it spins up the microstructure. This is
+the transfer in the opposite direction.
+
+\end{itemize}
+
+The key observation, which is the theme of these notes, is that $\nu_{r}$
+appears in four places: in the velocity diffusion, in the damping term, and in
+both couplings. It is not four independent parameters. It is one physical
+quantity, the vortex viscosity, appearing four times, and the coefficients
+$2\nu_{r}$, $2\nu_{r}$ and $4\nu_{r}$ are related to each other, not free. That
+relationship is what makes the analysis below work out as cleanly as it does.
+
+\subsection{Why we work on the divergence-free space}
+
+To keep the analysis to one difficulty at a time, I work here on the space of
+divergence free velocity fields,
+\[
+  \mathbf{V}_{\mathrm{div}}
+  = \left\{ \bv \in [\Honezero]^{2} : \dive \bv = 0 \right\} ,
+  \qquad
+  W = \Honezero .
+\]
+The reason is that when we derive the weak form, the pressure appears only in
+the term
+\[
+  - \int_\Om p \,\dive \bv \dx ,
+\]
+and if $\bv$ is divergence free this vanishes identically. So the pressure drops
+out of the formulation completely, and we are left with a problem in two
+unknowns rather than three, on a single product space, which is exactly the
+setting Lax--Milgram is stated for.
+
+This is legitimate mathematics and it gives us a genuine well-posedness result.
+It is not, however, how one discretises the problem, because building a finite
+element basis for $\mathbf{V}_{\mathrm{div}}$ is hard. That difficulty is what
+forces the mixed formulation and the inf-sup condition, and it is the subject of
+the next set of notes. Doing it this way round means we get the coercivity
+result cleanly here, and meet the pressure as a separate problem rather than
+fighting both at once.
+
+\subsection{The product space}
+
+On $\mathbf{V}_{\mathrm{div}} \times W$ we use the norm
+\begin{equation}\label{eq:prodnorm}
+  \lVert (\bv, z) \rVert^{2}
+  = \normH{\bv}^{2} + \normH{z}^{2}
+  = \normL{\bv}^{2} + \normL{\grad \bv}^{2}
+  + \normL{z}^{2} + \normL{\grad z}^{2} .
+\end{equation}
+The idea is simply to treat the pair $(\bu, w)$ as one unknown living in one
+space, so that everything from Lesson 1 applies with no structural change. This
+is the standard way to handle coupled systems and it is worth getting used to.
+
+\subsection{From three equations to one}
+
+The system \eqref{eq:mom} to \eqref{eq:micro} has three equations and three
+unknowns, but the analysis below is carried out on a single equation with a
+single bilinear form. It is worth doing that reduction slowly, because three
+separate things happen and it is easy to lose track of which is which. The
+incompressibility equation is absorbed into the choice of space, the pressure
+term then disappears as a consequence, and the two remaining equations are added
+together into one.
+
+\paragraph{Step 1: the incompressibility equation becomes the space.}
+The equation
+\[
+  \dive \bu = 0
+\]
+is a constraint on $\bu$ rather than a differential equation we need to test
+against. So instead of multiplying it by a test function, we build it into the
+space in which we look for $\bu$:
+\[
+  \mathbf{V}_{\mathrm{div}}
+  = \left\{ \bv \in [\Honezero]^{2} : \dive \bv = 0 \right\} .
+\]
+Searching for $\bu$ in this space imposes $\dive \bu = 0$ exactly. That disposes
+of one of the three equations, and two remain.
+
+\paragraph{Step 2: the momentum equation.}
+Multiply \eqref{eq:mom} by a test function $\bv \in \mathbf{V}_{\mathrm{div}}$
+and integrate over $\Om$:
+\[
+  -(\nu+\nu_{r}) \int_\Om (\lap \bu)\cdot \bv \dx
+  + \int_\Om \grad p \cdot \bv \dx
+  = 2\nu_{r} \int_\Om \grad^{\perp} w \cdot \bv \dx
+  + \int_\Om \mathbf{f}\cdot \bv \dx .
+\]
+
+For the Laplacian term, apply Green's identity componentwise exactly as in
+Lesson 1. The boundary terms vanish because $\bv$ has zero trace, giving
+\[
+  -(\nu+\nu_{r}) \int_\Om (\lap \bu)\cdot \bv \dx
+  = (\nu+\nu_{r}) \ip{\grad \bu}{\grad \bv} .
+\]
+
+For the pressure term, apply the master formula \eqref{eq:master} with
+$\phi = p$ and $\psi = v_{i}$, once for each component. The boundary terms again
+vanish because $\bv$ has zero trace, and each move costs a minus sign:
+\[
+  \int_\Om \grad p \cdot \bv \dx
+  = \sum_{i=1}^{2} \int_\Om (\partial_{i} p) v_{i} \dx
+  = - \sum_{i=1}^{2} \int_\Om p\, (\partial_{i} v_{i}) \dx
+  = - \int_\Om p \,\dive \bv \dx .
+\]
+But $\bv \in \mathbf{V}_{\mathrm{div}}$, so $\dive \bv = 0$ and the entire
+pressure term is zero.
+
+This is the payoff from Step 1, and it is the whole reason for restricting the
+space. It is worth noticing that the pressure vanished because of the divergence
+of the \emph{test} function, not of the solution. The weak form of the momentum
+equation is therefore
+\begin{equation}\label{eq:weakmom}
+  (\nu+\nu_{r}) \ip{\grad \bu}{\grad \bv}
+  - 2\nu_{r} \ip{\grad^{\perp} w}{\bv}
+  = \ip{\mathbf{f}}{\bv}
+  \qquad \text{for all } \bv \in \mathbf{V}_{\mathrm{div}} .
+\end{equation}
+
+\paragraph{Step 3: the microrotation equation.}
+Multiply \eqref{eq:micro} by a test function $z \in W = \Honezero$ and integrate
+over $\Om$. Green's identity applies to the Laplacian term, with the boundary
+term vanishing because $z$ has zero trace, and the zeroth order term $4\nu_{r}w$
+contains no derivative so nothing needs to be done to it. This gives
+\begin{equation}\label{eq:weakmicro}
+  (c_{a}+c_{d}) \ip{\grad w}{\grad z}
+  + 4\nu_{r} \ip{w}{z}
+  - 2\nu_{r} \ip{\curl \bu}{z}
+  = \ip{g}{z}
+  \qquad \text{for all } z \in W .
+\end{equation}
+
+\paragraph{Step 4: adding the two equations.}
+We now have two weak equations, \eqref{eq:weakmom} tested against every $\bv$
+and \eqref{eq:weakmicro} tested against every $z$. I claim this is equivalent to
+testing their sum against every pair $(\bv, z)$.
+
+One direction is immediate: if \eqref{eq:weakmom} and \eqref{eq:weakmicro} both
+hold then so does their sum, for every pair. The other direction is the one that
+needs an argument. Suppose the summed equation holds for all
+$(\bv, z) \in \mathbf{V}_{\mathrm{div}} \times W$. Choosing $z = 0$ makes every
+term coming from \eqref{eq:weakmicro} vanish, and what is left is exactly
+\eqref{eq:weakmom} for arbitrary $\bv$. Choosing $\bv = \mathbf{0}$ recovers
+\eqref{eq:weakmicro} in the same way. So both original equations follow from the
+sum, and the two formulations carry exactly the same information. Nothing is
+lost by adding them, and it is the freedom to set one component of the test pair
+to zero that makes the step reversible.
+
+Adding \eqref{eq:weakmom} and \eqref{eq:weakmicro} therefore gives the weak
+problem in its final form: find
+$(\bu, w) \in \mathbf{V}_{\mathrm{div}} \times W$ such that
+\begin{equation}\label{eq:weak}
+  a\big( (\bu, w), (\bv, z) \big) = F(\bv, z)
+  \qquad \text{for all } (\bv, z) \in \mathbf{V}_{\mathrm{div}} \times W ,
+\end{equation}
+where
+\begin{multline}\label{eq:bilinear}
+  a\big( (\bu, w), (\bv, z) \big)
+  = (\nu + \nu_{r}) \ip{\grad \bu}{\grad \bv}
+  + (c_{a}+c_{d}) \ip{\grad w}{\grad z}
+  + 4\nu_{r} \ip{w}{z} \\
+  {} - 2\nu_{r} \ip{\grad^{\perp} w}{\bv}
+  - 2\nu_{r} \ip{\curl \bu}{z}
+\end{multline}
+and $F(\bv, z) = \ip{\mathbf{f}}{\bv} + \ip{g}{z}$.
+
+The first three terms are things we have already met. The first is the Stokes
+term. The second and third together are exactly the reaction diffusion problem
+from Lesson 1, Problem C, with $c = c_{a} + c_{d}$ and $\kappa = 4\nu_{r}$. The
+last two are the couplings, and they are the new difficulty, because they carry
+a minus sign and there is nothing forcing them to be small. They can be
+negative, and if they are large and negative they could in principle destroy
+coercivity.
+
+\begin{remark}[Why we bother adding the equations]
+It would be perfectly possible to keep \eqref{eq:weakmom} and
+\eqref{eq:weakmicro} as two separate equations, and nothing would be wrong with
+that. The reason for combining them is that Lax--Milgram, Lemma
+\ref{lem:laxmilgram}, is a statement about one bilinear form on one Hilbert
+space. It says nothing about a pair of coupled equations posed on two different
+spaces. By treating the pair $(\bu, w)$ as a single unknown living in the single
+product space $\mathbf{V}_{\mathrm{div}} \times W$, every result from Lesson 1
+becomes applicable without any structural change, and indeed the coercivity
+proof below turns out to be the Lesson 1 argument with one extra absorption
+step.
+
+This packaging is the standard way of handling coupled systems and it is worth
+having as a reflex. When faced with a system of several equations, look for the
+product space that turns it into one.
+\end{remark}
+
+%==============================================================================
+\section{Coercivity}
+%==============================================================================
+
+\subsection{Plan of the argument, and why $\varepsilon$ comes first}
+
+Before doing the calculation I want to say what the shape of it is, because the
+order of operations is not obvious the first time.
+
+We set $\bv = \bu$ and $z = w$, which turns the first three terms of
+\eqref{eq:bilinear} into norms immediately and leaves one term of unknown sign.
+That bad term is a cross term: it is an inner product of two different
+quantities, $\curl \bu$ and $w$, and there is no reason for it to be small. So
+we bound it, and the only way to bound a cross term in terms of squares is
+Cauchy--Schwarz followed by Young.
+
+The point of Remark \ref{rem:whyeps} is that Young leaves us a free parameter,
+and until we fix it we do not know how much damage has been done to each of the
+good terms. So the parameter has to be chosen, and it has to be chosen at this
+stage rather than later, because the whole question of whether coercivity holds
+is the question of whether there exists a choice of $\varepsilon$ making all the
+remaining coefficients non-negative. If no such $\varepsilon$ exists, the
+argument fails and we would have to conclude something different about the
+system. So finding $\varepsilon$ is not a technical detail postponed to the end.
+It is the crux.
+
+Once $\varepsilon$ is fixed we substitute it in, the constants become explicit
+numbers, and after that the parameter never appears again. This is why
+$\varepsilon$ is used in the coercivity proof and does not appear anywhere in
+the boundedness proof. In boundedness there is nothing to absorb, because the
+two arguments $(\bu,w)$ and $(\bv,z)$ are independent and there is no
+possibility of one term cancelling another. Every term simply gets bounded on
+its own and the constants are added up.
+
+\subsection{Step 1: setting the arguments equal}
+
+Put $\bv = \bu$ and $z = w$ in \eqref{eq:bilinear}. The first three terms become
+norms straight away, since $\ip{\phi}{\phi} = \normL{\phi}^{2}$ directly from
+the definition of the norm. There is no estimate at this step:
+\[
+  (\nu+\nu_{r})\ip{\grad \bu}{\grad \bu} = (\nu+\nu_{r})\normL{\grad \bu}^{2} ,
+\]
+\[
+  (c_{a}+c_{d})\ip{\grad w}{\grad w} = (c_{a}+c_{d})\normL{\grad w}^{2} ,
+\]
+\[
+  4\nu_{r}\ip{w}{w} = 4\nu_{r}\normL{w}^{2} .
+\]
+
+For the fourth term we use Lemma \ref{lem:rot} with $\bv = \bu$, together with
+the symmetry of the $L^{2}$ inner product:
+\[
+  \ip{\grad^{\perp} w}{\bu} = \ip{w}{\curl \bu} = \ip{\curl \bu}{w} .
+\]
+So the fourth term becomes $-2\nu_{r}\ip{\curl \bu}{w}$, which is identical to
+the fifth term. The two couplings therefore combine into a single term:
+\[
+  - 2\nu_{r}\ip{\curl \bu}{w} - 2\nu_{r}\ip{\curl \bu}{w}
+  = - 4\nu_{r}\ip{\curl \bu}{w} .
+\]
+
+Collecting everything,
+\begin{equation}\label{eq:identity}
+  a\big( (\bu,w),(\bu,w) \big)
+  = (\nu+\nu_{r})\normL{\grad \bu}^{2}
+  + (c_{a}+c_{d})\normL{\grad w}^{2}
+  + 4\nu_{r}\normL{w}^{2}
+  - 4\nu_{r}\ip{\curl \bu}{w} .
+\end{equation}
+This is an identity, not an estimate. Three positive terms and one whose sign we
+do not know.
+
+\subsection{Step 2: bounding the coupling term}
+
+Apply Cauchy--Schwarz (Lemma \ref{lem:cs}) to the last term of
+\eqref{eq:identity}:
+\begin{equation}\label{eq:cs-applied}
+  \abs{4\nu_{r}\ip{\curl \bu}{w}}
+  \le 4\nu_{r} \normL{\curl \bu} \normL{w} .
+\end{equation}
+We now have a product of two different norms, and nothing in
+\eqref{eq:identity} to compare it against directly, since everything there is
+squared. So apply Young (Lemma \ref{lem:young}) with
+\[
+  a = \normL{\curl \bu}, \qquad b = \normL{w},
+\]
+and a parameter $\varepsilon > 0$ still to be chosen:
+\begin{equation}\label{eq:young-applied}
+  \normL{\curl \bu}\normL{w}
+  \le \frac{\varepsilon}{2}\normL{\curl \bu}^{2}
+  + \frac{1}{2\varepsilon}\normL{w}^{2} .
+\end{equation}
+
+The first term on the right involves $\normL{\curl \bu}^{2}$, which does not
+appear anywhere in \eqref{eq:identity}. What does appear is
+$\normL{\grad \bu}^{2}$. Lemma \ref{lem:curldiv} is the bridge between them:
+\begin{equation}\label{eq:curl-bound}
+  \normL{\curl \bu}^{2} \le \normL{\grad \bu}^{2} .
+\end{equation}
+Note that on $\mathbf{V}_{\mathrm{div}}$ we actually have equality here, because
+$\dive \bu = 0$, so nothing is being wasted. I write it as an inequality because
+that is the form that survives if the divergence free constraint is later
+relaxed.
+
+Combining \eqref{eq:cs-applied}, \eqref{eq:young-applied} and
+\eqref{eq:curl-bound},
+\begin{equation}\label{eq:coupling-bound}
+  \abs{4\nu_{r}\ip{\curl \bu}{w}}
+  \le 4\nu_{r}\left[
+    \frac{\varepsilon}{2}\normL{\grad \bu}^{2}
+    + \frac{1}{2\varepsilon}\normL{w}^{2}
+  \right]
+  = 2\nu_{r}\varepsilon \normL{\grad \bu}^{2}
+  + \frac{2\nu_{r}}{\varepsilon}\normL{w}^{2} .
+\end{equation}
+
+\subsection{Step 3: substituting back}
+
+Since $-X \ge -\abs{X}$ for any real $X$, we may replace the coupling term in
+\eqref{eq:identity} by minus the bound \eqref{eq:coupling-bound}:
+\begin{align}
+  a\big( (\bu,w),(\bu,w) \big)
+  &\ge (\nu+\nu_{r})\normL{\grad \bu}^{2}
+  + (c_{a}+c_{d})\normL{\grad w}^{2}
+  + 4\nu_{r}\normL{w}^{2} \notag \\
+  &\qquad {} - 2\nu_{r}\varepsilon\normL{\grad \bu}^{2}
+  - \frac{2\nu_{r}}{\varepsilon}\normL{w}^{2} \notag \\[2mm]
+  &= \Big( \nu + \nu_{r} - 2\nu_{r}\varepsilon \Big) \normL{\grad \bu}^{2}
+  + (c_{a}+c_{d})\normL{\grad w}^{2}
+  + \Big( 4\nu_{r} - \frac{2\nu_{r}}{\varepsilon} \Big) \normL{w}^{2} .
+  \label{eq:with-eps}
+\end{align}
+
+\subsection{Step 4: choosing $\varepsilon$}
+
+Now we choose the parameter. There are two things we want.
+
+First, we want the coefficient of $\normL{\grad \bu}^{2}$ to be free of
+$\nu_{r}$, that is, we want the $\nu_{r}$ contributions to cancel:
+\begin{equation}\label{eq:cond1}
+  \nu_{r} - 2\nu_{r}\varepsilon = 0 .
+\end{equation}
+Second, we need the coefficient of $\normL{w}^{2}$ to be non-negative, since a
+negative coefficient there would leave a term working against us:
+\begin{equation}\label{eq:cond2}
+  4\nu_{r} - \frac{2\nu_{r}}{\varepsilon} \ge 0 .
+\end{equation}
+
+That is two conditions and one unknown, so it is not obvious in advance that
+both can be met. Solve \eqref{eq:cond1}. Dividing by $\nu_{r} > 0$,
+\[
+  1 - 2\varepsilon = 0 \qquad \Longrightarrow \qquad \varepsilon = \tfrac{1}{2} .
+\]
+Now check \eqref{eq:cond2} at this value. With $\varepsilon = 1/2$ we have
+$2\nu_{r}/\varepsilon = 4\nu_{r}$, so
+\[
+  4\nu_{r} - \frac{2\nu_{r}}{\varepsilon} = 4\nu_{r} - 4\nu_{r} = 0 \ \ge 0 ,
+\]
+which is satisfied, though only just: the coefficient is exactly zero, not
+positive.
+
+\begin{remark}[This is not a coincidence]\label{rem:notcoincidence}
+The one value of $\varepsilon$ that removes $\nu_{r}$ from the velocity
+coefficient is the same value that exactly exhausts the damping term
+$4\nu_{r}\normL{w}^{2}$. Both constraints bind at once, with nothing to spare.
+
+This happens because the coefficients in the micropolar model are not
+independent. The two couplings carry $2\nu_{r}$ each and the damping term
+carries $4\nu_{r}$, and these are tied together by the way the model is derived
+from conservation of angular momentum. The algebra above is the mathematical
+shadow of that physical relationship. I say more about this in Section
+\ref{sec:conclusions}.
+\end{remark}
+
+Substituting $\varepsilon = 1/2$ into \eqref{eq:with-eps}, the velocity
+coefficient becomes $\nu + \nu_{r} - \nu_{r} = \nu$ and the $\normL{w}^{2}$ term
+disappears entirely:
+\begin{equation}\label{eq:coerc-seminorm}
+  \boxed{\;
+  a\big( (\bu,w),(\bu,w) \big)
+  \ \ge\ \nu \normL{\grad \bu}^{2} + (c_{a}+c_{d})\normL{\grad w}^{2} .
+  \;}
+\end{equation}
+Two things are worth noticing. The coefficient of the velocity term is $\nu$,
+not $\nu + \nu_{r}$: the vortex viscosity contribution was entirely consumed in
+absorbing the coupling. And $\nu_{r}$ does not appear anywhere on the right hand
+side.
+
+\subsection{Step 5: converting to the full product norm}
+
+Estimate \eqref{eq:coerc-seminorm} controls only the gradient parts. The norm
+\eqref{eq:prodnorm} also contains $\normL{\bu}^{2}$ and $\normL{w}^{2}$, and we
+have neither, since the $\normL{w}^{2}$ term was used up. Both fields have zero
+trace, so Poincar\'e supplies what is missing. This is the Lesson 1 argument run
+twice.
+
+By Lemma \ref{lem:poincare},
+\[
+  \normL{\bu}^{2} \le C_\Om^{2} \normL{\grad \bu}^{2},
+  \qquad
+  \normL{w}^{2} \le C_\Om^{2} \normL{\grad w}^{2},
+\]
+so
+\[
+  \normH{\bu}^{2} = \normL{\bu}^{2} + \normL{\grad \bu}^{2}
+  \le \left( C_\Om^{2} + 1 \right) \normL{\grad \bu}^{2} ,
+\]
+and identically for $w$. Rearranging both,
+\begin{equation}\label{eq:poincare-inverted}
+  \normL{\grad \bu}^{2} \ge \frac{\normH{\bu}^{2}}{C_\Om^{2}+1},
+  \qquad
+  \normL{\grad w}^{2} \ge \frac{\normH{w}^{2}}{C_\Om^{2}+1} .
+\end{equation}
+Substituting \eqref{eq:poincare-inverted} into \eqref{eq:coerc-seminorm},
+\[
+  a\big( (\bu,w),(\bu,w) \big)
+  \ge \frac{\nu}{C_\Om^{2}+1}\normH{\bu}^{2}
+  + \frac{c_{a}+c_{d}}{C_\Om^{2}+1}\normH{w}^{2} .
+\]
+Finally, replace both coefficients by the smaller of the two, exactly as in
+Lesson 1 Problem C:
+\[
+  a\big( (\bu,w),(\bu,w) \big)
+  \ge \frac{\min(\nu,\ c_{a}+c_{d})}{C_\Om^{2}+1}
+  \left( \normH{\bu}^{2} + \normH{w}^{2} \right) .
+\]
+
+We have proved the following.
+
+\begin{theorem}[Coercivity]\label{thm:coercivity}
+For all $(\bu,w) \in \mathbf{V}_{\mathrm{div}} \times W$,
+\[
+  a\big( (\bu,w),(\bu,w) \big)
+  \ \ge\ \alpha \, \lVert (\bu,w) \rVert^{2} ,
+  \qquad
+  \alpha = \frac{\min(\nu,\ c_{a}+c_{d})}{C_\Om^{2}+1} .
+\]
+In particular $\alpha$ does not depend on the vortex viscosity $\nu_{r}$.
+\end{theorem}
+
+%==============================================================================
+\section{Boundedness}
+%==============================================================================
+
+\subsection{Why there is no $\varepsilon$ here}
+
+In the coercivity proof the two arguments were the same, which is what allowed
+one term to be absorbed into another. In boundedness the two arguments
+$(\bu,w)$ and $(\bv,z)$ are completely independent, so no cancellation between
+terms is possible and there is nothing to absorb. Each term is bounded
+separately by Cauchy--Schwarz and the constants are added. Young's inequality
+plays no role.
+
+Throughout we use, repeatedly, the fact that each individual piece is bounded by
+the full product norm. From \eqref{eq:prodnorm}, all four summands are
+non-negative, so discarding any of them gives, for instance,
+\begin{equation}\label{eq:pieces}
+  \normL{\grad \bu} \le \normH{\bu} \le \lVert (\bu,w) \rVert,
+  \qquad
+  \normL{w} \le \normH{w} \le \lVert (\bu,w) \rVert ,
+\end{equation}
+and similarly for every other piece. This is the same discard-a-non-negative-term
+move as before.
+
+\subsection{The five terms}
+
+\paragraph{Term 1.} By Cauchy--Schwarz and then \eqref{eq:pieces},
+\[
+  (\nu+\nu_{r})\abs{\ip{\grad \bu}{\grad \bv}}
+  \le (\nu+\nu_{r}) \normL{\grad \bu}\normL{\grad \bv}
+  \le (\nu+\nu_{r}) \lVert (\bu,w) \rVert \lVert (\bv,z) \rVert .
+\]
+
+\paragraph{Term 2.} Identically,
+\[
+  (c_{a}+c_{d})\abs{\ip{\grad w}{\grad z}}
+  \le (c_{a}+c_{d}) \normL{\grad w}\normL{\grad z}
+  \le (c_{a}+c_{d}) \lVert (\bu,w) \rVert \lVert (\bv,z) \rVert .
+\]
+
+\paragraph{Term 3.} Again,
+\[
+  4\nu_{r}\abs{\ip{w}{z}}
+  \le 4\nu_{r} \normL{w}\normL{z}
+  \le 4\nu_{r} \lVert (\bu,w) \rVert \lVert (\bv,z) \rVert .
+\]
+
+\paragraph{Term 4.} Here we first use Lemma \ref{lem:rot} to move the derivative
+onto $\bv$, then Cauchy--Schwarz, then Lemma \ref{lem:curldiv} to replace the
+curl by the full gradient:
+\[
+  2\nu_{r}\abs{\ip{\grad^{\perp} w}{\bv}}
+  = 2\nu_{r}\abs{\ip{w}{\curl \bv}}
+  \le 2\nu_{r} \normL{w}\normL{\curl \bv}
+  \le 2\nu_{r} \normL{w}\normL{\grad \bv} ,
+\]
+and then by \eqref{eq:pieces} this is at most
+$2\nu_{r} \lVert (\bu,w) \rVert \lVert (\bv,z) \rVert$.
+
+\paragraph{Term 5.} The same, with the roles of the two arguments exchanged:
+\[
+  2\nu_{r}\abs{\ip{\curl \bu}{z}}
+  \le 2\nu_{r} \normL{\curl \bu}\normL{z}
+  \le 2\nu_{r} \normL{\grad \bu}\normL{z}
+  \le 2\nu_{r} \lVert (\bu,w) \rVert \lVert (\bv,z) \rVert .
+\]
+
+\subsection{Adding up}
+
+By the triangle inequality applied to \eqref{eq:bilinear}, the modulus of the
+whole form is at most the sum of the five bounds. Collecting the constants,
+\[
+  M = (\nu + \nu_{r}) + (c_{a}+c_{d}) + 4\nu_{r} + 2\nu_{r} + 2\nu_{r}
+  = \nu + (c_{a}+c_{d}) + 9\nu_{r} .
+\]
+
+\begin{theorem}[Boundedness]\label{thm:boundedness}
+For all $(\bu,w), (\bv,z) \in \mathbf{V}_{\mathrm{div}} \times W$,
+\[
+  \abs{a\big( (\bu,w),(\bv,z) \big)}
+  \ \le\ M \lVert (\bu,w) \rVert \lVert (\bv,z) \rVert ,
+  \qquad
+  M = \nu + (c_{a}+c_{d}) + 9\nu_{r} .
+\]
+In particular $M$ grows linearly in $\nu_{r}$.
+\end{theorem}
+
+%==============================================================================
+\section{Well-posedness}
+%==============================================================================
+
+\begin{theorem}[Well-posedness]\label{thm:wellposed}
+Let $\nu > 0$, $c_{a}+c_{d} > 0$, $\nu_{r} \ge 0$, and let
+$\mathbf{f} \in [\Ltwo]^{2}$ and $g \in \Ltwo$. Then the weak problem
+\eqref{eq:weak} has exactly one solution
+$(\bu, w) \in \mathbf{V}_{\mathrm{div}} \times W$, and it satisfies
+\[
+  \lVert (\bu,w) \rVert
+  \le \frac{1}{\alpha} \lVert F \rVert ,
+  \qquad
+  \alpha = \frac{\min(\nu,\ c_{a}+c_{d})}{C_\Om^{2}+1} .
+\]
+\end{theorem}
+
+\begin{proof}
+The product space $\mathbf{V}_{\mathrm{div}} \times W$ is a Hilbert space with
+the norm \eqref{eq:prodnorm}, being a closed subspace of a product of Hilbert
+spaces. The form $a$ is bilinear by inspection, bounded by Theorem
+\ref{thm:boundedness}, and coercive by Theorem \ref{thm:coercivity}. The
+functional $F$ is bounded because, by Cauchy--Schwarz,
+\[
+  \abs{F(\bv,z)} \le \normL{\mathbf{f}}\normL{\bv} + \normL{g}\normL{z}
+  \le \left( \normL{\mathbf{f}} + \normL{g} \right) \lVert (\bv,z) \rVert .
+\]
+Lemma \ref{lem:laxmilgram} then gives existence, uniqueness, and the stated
+bound.
+\end{proof}
+
+%==============================================================================
+\section{Conclusions}
+\label{sec:conclusions}
+%==============================================================================
+
+\subsection{Summary of the constants}
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Quantity & Value & Depends on $\nu_{r}$? \\
+\midrule
+Coercivity constant $\alpha$
+  & $\dfrac{\min(\nu,\ c_{a}+c_{d})}{C_\Om^{2}+1}$ & no \\[3mm]
+Boundedness constant $M$
+  & $\nu + (c_{a}+c_{d}) + 9\nu_{r}$ & yes, linearly \\[2mm]
+Ratio $M/\alpha$
+  & $\dfrac{\big(\nu + (c_{a}+c_{d}) + 9\nu_{r}\big)(C_\Om^{2}+1)}
+           {\min(\nu,\ c_{a}+c_{d})}$ & yes, linearly \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The limit of small vortex viscosity}
+
+As $\nu_{r} \to 0$, both couplings and the damping term all vanish, since each
+carries a factor $\nu_{r}$. The bilinear form reduces to
+\[
+  a\big( (\bu,w),(\bv,z) \big) \longrightarrow
+  \nu \ip{\grad \bu}{\grad \bv} + (c_{a}+c_{d}) \ip{\grad w}{\grad z} ,
+\]
+which is completely decoupled. The velocity solves a divergence free Stokes
+problem and the microrotation solves a Poisson problem, and neither knows about
+the other. This makes sense physically: $\nu_{r}$ is the coupling. With no
+vortex viscosity the microstructure spins freely and exchanges nothing with the
+bulk flow.
+
+The coercivity constant survives this limit unchanged, and each of the two
+constants inside the minimum is precisely the Lesson 1 constant for the
+corresponding decoupled problem. So the limit is continuous, and the analysis
+degenerates to the right thing, which is a good check that no error has crept
+in.
+
+\subsection{The limit of large vortex viscosity, and what it predicts numerically}
+
+As $\nu_{r} \to \infty$ the situation is different. Coercivity never fails:
+$\alpha$ is fixed and strictly positive for every $\nu_{r}$, so by Theorem
+\ref{thm:wellposed} the problem remains uniquely solvable no matter how large
+the vortex viscosity is. But $M$ grows without bound, so the ratio
+\[
+  \frac{M}{\alpha} \sim \frac{9\nu_{r}\left( C_\Om^{2}+1 \right)}
+  {\min(\nu,\ c_{a}+c_{d})}
+  \qquad \text{as } \nu_{r} \to \infty
+\]
+grows linearly. This ratio is the condition number of the problem, and it is
+exactly the constant that appears in C\'ea's lemma:
+\[
+  \lVert (\bu,w) - (\bu_{h},w_{h}) \rVert
+  \le \frac{M}{\alpha}
+  \inf_{(\bv_{h},z_{h})} \lVert (\bu,w) - (\bv_{h},z_{h}) \rVert .
+\]
+
+So the analysis makes a concrete numerical prediction. The convergence
+\emph{rates} of a finite element discretisation should be unaffected by
+$\nu_{r}$, because they come from the interpolation estimate on the right hand
+side. But the error \emph{constants} should grow linearly in $\nu_{r}$, meaning
+that for a fixed mesh the computed solution gets worse as the vortex viscosity
+increases, and a finer mesh is needed to recover the same accuracy. The discrete
+linear system should also become progressively harder for iterative solvers, so
+Krylov iteration counts should climb and preconditioning should stop being
+optional.
+
+This is a prediction that can be tested directly, and testing it is what the
+parameter study in the project plan is for. Having derived the prediction from
+the analysis first, rather than simply running the code and describing what
+came out, is the difference between numerical analysis and computation.
+
+\subsection{Why $\nu_{r}$ disappears from the coercivity constant}
+
+The vortex viscosity appears four times in the equations, and yet it leaves no
+trace at all in $\alpha$. I think this is the most interesting thing in these
+notes, and the reason for it is physical rather than algebraic.
+
+Coercivity is fundamentally an energy statement. It says that the bilinear form
+controls the total energy of the pair $(\bu, w)$ from below, which is the same
+as saying that the system dissipates energy at a rate proportional to how much
+energy it has. Now consider what $\nu_{r}$ actually does. The two coupling terms
+transfer angular momentum between the bulk flow and the microstructure, one in
+each direction. Transfer is not dissipation: energy moved from the velocity
+field to the microrotation field is still in the system. A mechanism that only
+moves energy around internally cannot contribute anything to the total, so it
+must cancel out of any statement about the total, and that is exactly what the
+choice $\varepsilon = 1/2$ achieves.
+
+The energy that genuinely leaves the system is dissipated by the two
+diffusivities: $\nu$, through viscous shear in the bulk fluid, and
+$c_{a} + c_{d}$, through angular diffusion in the microstructure. These are the
+only two mechanisms that actually destroy energy, and so these are the only two
+that appear in $\alpha$. The minimum appears because the system as a whole can
+only dissipate as fast as its slowest channel.
+
+This also explains Remark \ref{rem:notcoincidence}. The two conditions
+\eqref{eq:cond1} and \eqref{eq:cond2} bind simultaneously because the
+coefficients $2\nu_{r}$, $2\nu_{r}$ and $4\nu_{r}$ in the model are not
+independent parameters. They come from a single conservation law, and the exact
+cancellation in the algebra is the trace that conservation law leaves behind. If
+the model had been written with arbitrary unrelated coefficients, the two
+conditions would generally have been incompatible and coercivity would have
+required a smallness assumption on the coupling. The fact that it does not is a
+statement about the model, not about the proof.
+
+\subsection{What comes next}
+
+The result proved here is genuine but incomplete, because the space
+$\mathbf{V}_{\mathrm{div}}$ cannot be discretised conveniently. Constructing a
+finite element basis of divergence free functions is possible but awkward, and
+essentially nobody does it. The practical route is to keep the pressure as an
+unknown, work on $[\Honezero]^{2} \times \Ltwozero \times \Honezero$, and impose
+$\dive \bu = 0$ weakly through the pressure.
+
+The price is that coercivity is no longer enough. The pressure enters through a
+constraint rather than through a coercive term, so Lax--Milgram does not apply
+and must be replaced by the Babu\v{s}ka--Brezzi theory, whose extra hypothesis
+is the inf-sup condition. That is the subject of Lesson 3, and it is the real
+reason mixed finite element methods exist as a separate subject.
+
+Nothing proved here is wasted. The coercivity estimate \eqref{eq:coerc-seminorm}
+is exactly the first of the two Brezzi conditions, and it carries over unchanged.
+What has to be added is the second.
+
+\end{document}
