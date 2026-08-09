@@ -1,0 +1,881 @@
+%==============================================================================
+%  lesson03.tex
+%  The mixed formulation, saddle point structure, and the inf-sup condition
+%  Repository: micropolar-fem
+%  Author: M. Javed Bukhari
+%
+%  Requires macros.tex in the same folder.
+%  Compile with: pdflatex lesson03.tex   (run it twice, for the contents page)
+%==============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\input{macros}
+
+\newcommand{\Vdiv}{\mathbf{V}_{\mathrm{div}}}
+\newcommand{\Vsp}{\mathbf{V}}
+\newcommand{\Qsp}{Q}
+\newcommand{\Wsp}{W}
+\newcommand{\Xsp}{X}
+\newcommand{\Zsp}{Z}
+\newcommand{\bff}{\mathbf{f}}
+\newcommand{\bzero}{\mathbf{0}}
+
+\title{The Mixed Formulation and the Inf-Sup Condition:\\
+Why Coercivity Is Not Enough}
+\author{M. Javed Bukhari}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+In Lesson 2 I proved that the linear stationary micropolar system is well posed
+on the space of divergence free velocity fields. That result is correct but it
+cannot be used for computation, because there is no convenient finite element
+basis consisting of exactly divergence free functions. These notes therefore go
+back to the full problem, keep the pressure as an unknown, and impose
+incompressibility weakly. The price is that the resulting bilinear form is no
+longer coercive, so Lax--Milgram no longer applies. It has to be replaced by
+Brezzi's theorem, which asks for two conditions instead of one: coercivity on
+the kernel, which is exactly what Lesson 2 already proved, and a new condition
+called the inf-sup condition. I set up all the spaces carefully, explain what
+every term in the inf-sup condition means and why it has the shape it does, and
+then work through five tasks establishing the structure of the mixed problem.
+\end{abstract}
+
+\tableofcontents
+
+%==============================================================================
+\section{Why we are changing the formulation}
+%==============================================================================
+
+Lesson 2 worked on
+\[
+  \Vdiv = \left\{ \bv \in [\Honezero]^{2} : \dive \bv = 0 \right\} ,
+\]
+and the pressure disappeared from the weak form because the term
+$-\int_\Om p \,\dive \bv \dx$ vanishes identically when $\bv$ is divergence
+free. That gave a clean coercive problem and Lax--Milgram applied directly.
+
+The difficulty is entirely computational. To discretise a problem posed on
+$\Vdiv$ we would need a finite element basis whose functions are
+\emph{exactly} divergence free, that is, piecewise polynomial vector fields
+$\bv_{h}$ with $\dive \bv_{h} = 0$ pointwise. Such bases do exist, the
+Scott--Vogelius element being the best known example, but they require special
+meshes or high polynomial degree, and they are not what standard finite element
+software provides. If we take the ordinary vector valued $P_{2}$ basis, not a
+single one of its functions is divergence free.
+
+So we go back to the full system, keep the pressure $p$ as a genuine unknown,
+and impose $\dive \bu = 0$ \emph{weakly}, meaning as an equation tested against
+pressure functions rather than as a property built into the space. This is
+called the mixed formulation, and it is what every practical finite element code
+for incompressible flow actually solves.
+
+The price is the subject of these notes. Once the space is enlarged, the
+bilinear form stops being coercive, and the theory has to change.
+
+%==============================================================================
+\section{The spaces}
+%==============================================================================
+
+Since the whole lesson is about which space each unknown lives in, I want to set
+all of them out carefully, with definitions, before anything else happens.
+
+\subsection{Recalling $L^{2}$ and $H^{1}$}
+
+\begin{definition}[The space $\Ltwo$]
+$\Ltwo$ is the set of measurable functions $\phi : \Om \to \R$ with
+\[
+  \int_\Om \abs{\phi}^{2} \dx < \infty ,
+\]
+where two functions are regarded as the same element if they agree outside a set
+of measure zero. It is equipped with the inner product and norm
+\[
+  \ip{\phi}{\psi} = \int_\Om \phi \psi \dx ,
+  \qquad
+  \normL{\phi} = \ip{\phi}{\phi}^{1/2} .
+\]
+\end{definition}
+
+The intuition, from Lesson 1, is that $\normL{\phi}^{2}$ is a total squared
+magnitude. When $\phi$ is a velocity it is kinetic energy up to a constant, so
+membership of $\Ltwo$ is the statement that the field has finite energy.
+
+The identification of functions agreeing almost everywhere is needed for
+$\normL{\cdot}$ to be a genuine norm rather than a seminorm. If we did not
+identify them, a function which is zero except at one point would have zero norm
+without being the zero function, and the axiom
+$\normL{\phi} = 0 \Rightarrow \phi = 0$ would fail.
+
+\begin{definition}[The spaces $\Hone$ and $\Honezero$]
+$\Hone$ is the set of $\phi \in \Ltwo$ whose weak first derivatives also lie in
+$\Ltwo$, with norm
+\[
+  \normH{\phi}^{2} = \normL{\phi}^{2} + \normL{\grad \phi}^{2} .
+\]
+The subspace $\Honezero$ is the closure of $\Cinfc$ in this norm, which for a
+Lipschitz domain coincides with the set of $\Hone$ functions whose trace on
+$\dOm$ vanishes.
+\end{definition}
+
+Physically, $\normL{\grad \phi}^{2}$ measures how fast the field varies, and for
+a velocity field it is proportional to the rate of viscous energy dissipation.
+So $\Hone$ is the space of fields with finite energy and finite dissipation
+rate, and $\Honezero$ imposes in addition the no slip condition at the walls.
+
+\subsection{The three spaces of the mixed problem}
+
+The mixed formulation has three unknowns and therefore three spaces.
+
+\begin{definition}[Velocity space]
+\[
+  \Vsp = [\Honezero]^{2}
+  = \left\{ \bv = (v_{1},v_{2}) : v_{1}, v_{2} \in \Honezero \right\} ,
+  \qquad
+  \normH{\bv}^{2} = \normH{v_{1}}^{2} + \normH{v_{2}}^{2} .
+\]
+\end{definition}
+
+Note carefully what has changed from Lesson 2. There we used $\Vdiv$, which was
+$\Vsp$ together with the extra requirement $\dive \bv = 0$. Now that requirement
+has been removed from the space. The velocity space is the plain product of two
+copies of $\Honezero$, with no constraint at all. The constraint has not been
+abandoned, it has been moved: it will reappear in Section \ref{sec:mixed} as an
+equation rather than as a property of the space.
+
+\begin{definition}[Microrotation space]
+\[
+  \Wsp = \Honezero .
+\]
+\end{definition}
+
+This is unchanged from Lesson 2. The microrotation is a scalar in two
+dimensions, it satisfies a homogeneous Dirichlet condition, and its equation is
+of reaction diffusion type, so $\Honezero$ is the natural space for exactly the
+reasons given in Lesson 1.
+
+\begin{definition}[Pressure space]\label{def:Q}
+\[
+  \Qsp = \Ltwozero = \left\{ q \in \Ltwo : \int_\Om q \dx = 0 \right\} ,
+  \qquad
+  \lVert q \rVert_{\Qsp} = \normL{q} .
+\]
+\end{definition}
+
+This space is new, since in Lesson 2 there was no pressure unknown at all, so I
+want to say carefully both why the pressure lives in $\Ltwo$ rather than
+$\Hone$, and why we take the zero mean subspace.
+
+\paragraph{Why $L^{2}$ and not $H^{1}$.}
+The rule from Lesson 1 is that the space is read off from the weak formulation
+by asking what regularity makes its integrals finite. In the mixed formulation
+the pressure appears only in the term
+\[
+  - \int_\Om p \,\dive \bv \dx .
+\]
+There is no derivative on $p$ here. It was removed by integration by parts and
+transferred onto $\bv$, which is exactly the trade we always make. For this
+integral to be finite we need only $p \in \Ltwo$, since $\dive \bv \in \Ltwo$
+whenever $\bv \in \Vsp$ and Cauchy--Schwarz then applies. Asking for $p \in
+\Hone$ would be demanding more regularity than the formulation requires, and by
+the argument of Lesson 1 that is the wrong thing to do. So the pressure sits in
+a space with no derivatives at all, one step rougher than the velocity. This
+asymmetry between the velocity space and the pressure space is characteristic of
+mixed problems.
+
+\paragraph{Why the zero mean condition.}
+In the momentum equation the pressure appears only through $\grad p$. Hence if
+$p$ solves the problem then so does $p + C$ for any constant $C$, because
+$\grad(p+C) = \grad p$. The physics determines pressure differences, not
+absolute pressure, so without some normalisation the solution is not unique.
+
+The set of constants is a one dimensional subspace of $\Ltwo$, and $\Ltwo$
+splits orthogonally as
+\[
+  \Ltwo = \Ltwozero \oplus \left\{ \text{constants} \right\} .
+\]
+To see this, given $q \in \Ltwo$ write
+\[
+  q = \underbrace{\left( q - \frac{1}{\abs{\Om}}\int_\Om q \dx \right)}_{\text{zero mean}}
+  + \underbrace{\frac{1}{\abs{\Om}}\int_\Om q \dx}_{\text{constant}} ,
+\]
+and check that the first bracket integrates to zero while the two pieces are
+orthogonal in $\Ltwo$. Restricting to $\Ltwozero$ therefore amounts to choosing
+one representative from each family $\{p + C : C \in \R\}$, namely the one with
+zero average.
+
+\begin{remark}[What quotienting means, and where you have already seen it]
+\label{rem:quotient}
+To quotient a space by a subspace means to declare two elements equal whenever
+they differ by an element of that subspace, and then to work with the resulting
+families rather than with individual elements. Clock arithmetic is the familiar
+example: $14$ and $2$ are the same time because they differ by a multiple of
+$12$.
+
+Here the subspace is the constants, and $p$ and $p + C$ are the same physical
+state. Rather than carrying families around we pick one representative from each,
+which is what Definition \ref{def:Q} does.
+
+This is not an abstraction with no consequences. If the pressure space is left
+as all of $\Ltwo$, so that the constants are still present, then the
+corresponding matrix in a finite element code has a nontrivial null space: the
+vector of nodal values representing a constant pressure is mapped to zero. The
+matrix is then singular, and a direct solver will either fail or return
+nonsense. The step of fixing the constant in code, whether by a Lagrange
+multiplier or by pinning one pressure degree of freedom, is the discrete
+counterpart of passing to $\Ltwozero$. So the abstract quotient and the singular
+matrix are the same phenomenon seen from two sides.
+\end{remark}
+
+\subsection{The product spaces}
+
+Following the packaging idea of Lesson 2, we group the unknowns. Write
+\[
+  \Vsp \times \Wsp
+  \quad \text{with} \quad
+  \lVert (\bv, z) \rVert_{\Vsp \times \Wsp}^{2} = \normH{\bv}^{2} + \normH{z}^{2} ,
+\]
+for the pair carrying the coercive part of the problem, and
+\[
+  \Xsp = (\Vsp \times \Wsp) \times \Qsp
+  \quad \text{with} \quad
+  \lVert (\bv, z, q) \rVert_{\Xsp}^{2}
+  = \normH{\bv}^{2} + \normH{z}^{2} + \normL{q}^{2} ,
+\]
+for all three unknowns together. Each is a Hilbert space, being a finite product
+of Hilbert spaces with the sum of squares norm.
+
+I will use $\Vsp \times \Wsp$ throughout, and $\Xsp$ only in Section
+\ref{sec:notcoercive}, where the point is precisely that working on $\Xsp$ does
+not succeed.
+
+%==============================================================================
+\section{The mixed formulation}
+\label{sec:mixed}
+%==============================================================================
+
+\subsection{The strong form}
+
+The system, as in Lesson 2, is
+\begin{align}
+  -(\nu + \nu_{r}) \lap \bu + \grad p
+    &= 2\nu_{r} \grad^{\perp} w + \bff , \label{eq:mom} \\
+  \dive \bu &= 0 , \label{eq:incomp} \\
+  -(c_{a} + c_{d}) \lap w + 4\nu_{r} w
+    &= 2\nu_{r} \curl \bu + g , \label{eq:micro}
+\end{align}
+with $\bu = \bzero$ and $w = 0$ on $\dOm$.
+
+\subsection{Task 3.A: deriving the mixed weak form}
+
+The derivation follows Lesson 2 exactly, with one change: we do not discard the
+pressure term, because the test functions are no longer divergence free.
+
+\paragraph{Step 1: the momentum equation.}
+Multiply \eqref{eq:mom} by $\bv \in \Vsp$ and integrate over $\Om$:
+\[
+  -(\nu+\nu_{r}) \int_\Om (\lap \bu)\cdot \bv \dx
+  + \int_\Om \grad p \cdot \bv \dx
+  = 2\nu_{r} \int_\Om \grad^{\perp} w \cdot \bv \dx
+  + \int_\Om \bff \cdot \bv \dx .
+\]
+
+For the Laplacian term, apply Green's identity componentwise. The boundary terms
+vanish because $\bv \in [\Honezero]^{2}$ has zero trace:
+\[
+  -(\nu+\nu_{r}) \int_\Om (\lap \bu)\cdot \bv \dx
+  = (\nu+\nu_{r}) \ip{\grad \bu}{\grad \bv} .
+\]
+
+For the pressure term, apply the integration by parts formula
+\[
+  \int_\Om (\partial_{i}\phi)\psi \dx
+  = \int_{\dOm} \phi \psi n_{i} \ds - \int_\Om \phi(\partial_{i}\psi) \dx
+\]
+with $\phi = p$ and $\psi = v_{i}$, once for each component. The boundary terms
+vanish because $v_{i}$ has zero trace, so
+\begin{equation}\label{eq:pressure-term}
+  \int_\Om \grad p \cdot \bv \dx
+  = \sum_{i=1}^{2} \int_\Om (\partial_{i}p) v_{i} \dx
+  = - \sum_{i=1}^{2} \int_\Om p (\partial_{i}v_{i}) \dx
+  = - \int_\Om p \,\dive \bv \dx .
+\end{equation}
+
+In Lesson 2 this was the end of the story, because $\dive \bv = 0$ made
+\eqref{eq:pressure-term} vanish. Now $\bv$ is an arbitrary element of $\Vsp$, so
+the term survives. Define
+\begin{equation}\label{eq:bdef}
+  b(\bv, q) := - \int_\Om q \,\dive \bv \dx .
+\end{equation}
+The momentum equation in weak form is then
+\begin{equation}\label{eq:weakmom}
+  (\nu+\nu_{r})\ip{\grad \bu}{\grad \bv} - 2\nu_{r}\ip{\grad^{\perp}w}{\bv}
+  + b(\bv, p) = \ip{\bff}{\bv}
+  \qquad \text{for all } \bv \in \Vsp .
+\end{equation}
+
+\paragraph{Step 2: the microrotation equation.}
+Unchanged from Lesson 2. Multiply \eqref{eq:micro} by $z \in \Wsp$, integrate,
+apply Green's identity to the Laplacian term with the boundary term vanishing
+because $z$ has zero trace, and leave the zeroth order term alone since it
+contains no derivative:
+\begin{equation}\label{eq:weakmicro}
+  (c_{a}+c_{d})\ip{\grad w}{\grad z} + 4\nu_{r}\ip{w}{z}
+  - 2\nu_{r}\ip{\curl \bu}{z} = \ip{g}{z}
+  \qquad \text{for all } z \in \Wsp .
+\end{equation}
+
+\paragraph{Step 3: the incompressibility equation.}
+This is the genuinely new step. In Lesson 2 the constraint was built into the
+space and never tested. Now we test it. Multiply \eqref{eq:incomp} by
+$q \in \Qsp$ and integrate:
+\[
+  \int_\Om q \,\dive \bu \dx = 0
+  \qquad \text{for all } q \in \Qsp ,
+\]
+which in the notation \eqref{eq:bdef} is
+\begin{equation}\label{eq:weakincomp}
+  b(\bu, q) = 0 \qquad \text{for all } q \in \Qsp .
+\end{equation}
+No integration by parts is needed, since there is nothing to move.
+
+\paragraph{Step 4: adding the first two equations.}
+As in Lesson 2, testing \eqref{eq:weakmom} against every $\bv$ and
+\eqref{eq:weakmicro} against every $z$ is equivalent to testing their sum
+against every pair $(\bv,z)$: choosing $z = 0$ recovers the first, choosing
+$\bv = \bzero$ recovers the second. Writing $a$ for the bilinear form of Lesson
+2,
+\begin{multline}\label{eq:adef}
+  a\big( (\bu,w),(\bv,z) \big)
+  = (\nu+\nu_{r})\ip{\grad \bu}{\grad \bv}
+  + (c_{a}+c_{d})\ip{\grad w}{\grad z}
+  + 4\nu_{r}\ip{w}{z} \\
+  {} - 2\nu_{r}\ip{\grad^{\perp}w}{\bv} - 2\nu_{r}\ip{\curl \bu}{z} ,
+\end{multline}
+and $F(\bv,z) = \ip{\bff}{\bv} + \ip{g}{z}$, we arrive at the mixed problem.
+
+\begin{definition}[Mixed weak formulation]\label{def:mixed}
+Find $\big( (\bu,w), p \big) \in (\Vsp \times \Wsp) \times \Qsp$ such that
+\begin{align}
+  a\big( (\bu,w),(\bv,z) \big) + b(\bv, p) &= F(\bv,z)
+    &&\text{for all } (\bv,z) \in \Vsp \times \Wsp , \label{eq:mixed1} \\
+  b(\bu, q) &= 0
+    &&\text{for all } q \in \Qsp . \label{eq:mixed2}
+\end{align}
+\end{definition}
+
+Note the structure. The form $a$ is exactly the one analysed in Lesson 2, with
+no change whatsoever; the only difference is that it is now posed on the larger
+space $\Vsp \times \Wsp$ rather than $\Vdiv \times \Wsp$. The new object is $b$,
+which appears twice, once carrying the pressure into the momentum equation and
+once expressing the constraint. A system with this shape, a coercive block plus
+a constraint block appearing symmetrically, is called a saddle point problem.
+
+%==============================================================================
+\section{Task 3.B: the form is not coercive on $\Xsp$}
+\label{sec:notcoercive}
+%==============================================================================
+
+The natural first attempt is to package all three unknowns into one bilinear
+form on $\Xsp$ and apply Lax--Milgram as before. This section shows that it does
+not work, and identifies the reason.
+
+Define, for $(\bu,w,p)$ and $(\bv,z,q)$ in $\Xsp$,
+\begin{equation}\label{eq:calA}
+  \mathcal{A}\big( (\bu,w,p),(\bv,z,q) \big)
+  := a\big( (\bu,w),(\bv,z) \big) + b(\bv,p) - b(\bu,q) .
+\end{equation}
+The minus sign on the last term is a convention, chosen so that the second
+equation of Definition \ref{def:mixed} is recovered with the correct sign when
+we test with $q$; any consistent choice would do.
+
+\begin{proposition}[No coercivity on $\Xsp$]\label{prop:nocoerc}
+There is no constant $\alpha > 0$ with
+\[
+  \mathcal{A}\big( (\bu,w,p),(\bu,w,p) \big)
+  \ge \alpha \lVert (\bu,w,p) \rVert_{\Xsp}^{2}
+  \qquad \text{for all } (\bu,w,p) \in \Xsp .
+\]
+\end{proposition}
+
+\begin{proof}
+First compute what happens on the diagonal. Setting $\bv = \bu$, $z = w$ and
+$q = p$ in \eqref{eq:calA},
+\[
+  \mathcal{A}\big( (\bu,w,p),(\bu,w,p) \big)
+  = a\big( (\bu,w),(\bu,w) \big) + b(\bu,p) - b(\bu,p)
+  = a\big( (\bu,w),(\bu,w) \big) .
+\]
+The two occurrences of $b$ cancel exactly. This is not an accident of the sign
+convention: whatever sign is chosen, the pressure enters $\mathcal{A}$ only
+through $b$, and on the diagonal both occurrences have the same arguments, so
+they cancel or double but in neither case produce anything involving
+$\normL{p}^{2}$.
+
+Now take the explicit choice
+\[
+  \bu = \bzero , \qquad w = 0 , \qquad p = q_{0}
+\]
+where $q_{0} \in \Qsp$ is any nonzero element, for instance
+$q_{0}(x,y) = \cos(\pi x)$ on $\Om = (0,1)^{2}$, which has zero mean since
+$\int_{0}^{1}\cos(\pi x) \dx = 0$ and is not identically zero.
+
+For this choice the left hand side is
+\[
+  \mathcal{A}\big( (\bzero,0,q_{0}),(\bzero,0,q_{0}) \big)
+  = a\big( (\bzero,0),(\bzero,0) \big) = 0 ,
+\]
+since $a$ is bilinear and therefore vanishes when either argument is zero. The
+right hand side is
+\[
+  \alpha \lVert (\bzero,0,q_{0}) \rVert_{\Xsp}^{2}
+  = \alpha \left( 0 + 0 + \normL{q_{0}}^{2} \right)
+  = \alpha \normL{q_{0}}^{2} > 0 ,
+\]
+because $q_{0} \neq 0$. So the asserted inequality would read $0 \ge \alpha
+\normL{q_{0}}^{2} > 0$, which is false for every $\alpha > 0$.
+\end{proof}
+
+\begin{remark}[Why this is structural rather than a failure of technique]
+It is worth being clear that Proposition \ref{prop:nocoerc} is not saying that
+we were not clever enough. Coercivity on $\Xsp$ would require the form to
+control $\normL{p}^{2}$ from below, and the form simply contains no term in
+which the pressure is paired with itself. Compare with the velocity, which
+appears in $(\nu+\nu_{r})\ip{\grad \bu}{\grad \bv}$ and so produces
+$\normL{\grad \bu}^{2}$ on the diagonal, or the microrotation, which appears in
+$4\nu_{r}\ip{w}{z}$ and produces $\normL{w}^{2}$.
+
+The reason is physical. Velocity and microrotation are diffusing fields, and the
+diffusion terms represent dissipation of their energy. The pressure is not a
+field of that kind at all. It is a Lagrange multiplier: a quantity whose only
+role is to enforce the constraint $\dive \bu = 0$, adjusting itself to whatever
+value is needed. It has no equation of its own, no diffusion, and no energy. A
+Lagrange multiplier can never appear coercively, in any problem, so no amount of
+manipulation will produce a $\normL{p}^{2}$ term.
+
+The conclusion is that Lax--Milgram is simply the wrong theorem here, and we
+need one designed for problems with constraints.
+\end{remark}
+
+%==============================================================================
+\section{Brezzi's theorem}
+%==============================================================================
+
+\subsection{The kernel}
+
+The replacement theorem is stated in terms of the set of velocities that satisfy
+the constraint.
+
+\begin{definition}[Kernel of $b$]\label{def:kernel}
+\[
+  \Zsp = \left\{ (\bv,z) \in \Vsp \times \Wsp
+  : b(\bv,q) = 0 \ \text{ for all } q \in \Qsp \right\} .
+\]
+\end{definition}
+
+\subsection{Statement}
+
+\begin{theorem}[Brezzi]\label{thm:brezzi}
+Let $\Vsp \times \Wsp$ and $\Qsp$ be Hilbert spaces, let $a$ be a bounded
+bilinear form on $(\Vsp\times\Wsp)^{2}$ and $b$ a bounded bilinear form on
+$(\Vsp\times\Wsp)\times\Qsp$. Suppose:
+
+\begin{itemize}
+\item[\textbf{(B1)}] \emph{Coercivity on the kernel.} There is $\alpha > 0$ with
+\[
+  a\big( (\bv,z),(\bv,z) \big)
+  \ge \alpha \lVert (\bv,z) \rVert_{\Vsp\times\Wsp}^{2}
+  \qquad \text{for all } (\bv,z) \in \Zsp .
+\]
+
+\item[\textbf{(B2)}] \emph{The inf-sup condition.} There is $\beta > 0$ with
+\[
+  \inf_{q \in \Qsp \setminus \{0\}} \
+  \sup_{\bv \in \Vsp \setminus \{\bzero\}} \
+  \frac{b(\bv,q)}{\normH{\bv}\,\normL{q}} \ \ge\ \beta .
+\]
+\end{itemize}
+
+Then for every bounded linear functional $F$ the mixed problem of Definition
+\ref{def:mixed} has exactly one solution $\big( (\bu,w),p \big)$, and it depends
+continuously on the data, with constants depending only on $\alpha$, $\beta$ and
+the boundedness constants of $a$ and $b$.
+\end{theorem}
+
+I am quoting this theorem rather than proving it. The proof is not
+short and it belongs to the general theory of saddle point problems; Boffi,
+Brezzi and Fortin give it in full.
+
+\subsection{What has changed, and what has not}
+
+Two hypotheses now replace the single coercivity hypothesis of Lax--Milgram.
+
+Condition (B1) is weaker than full coercivity, because it is only required on
+the kernel $\Zsp$ rather than on all of $\Vsp \times \Wsp$. That is exactly what
+makes the theorem usable: we saw in Proposition \ref{prop:nocoerc} that
+coercivity on the whole space is hopeless, but on the kernel the constraint is
+satisfied and the situation is the one from Lesson 2.
+
+Condition (B2) is entirely new and is the price of enlarging the space. It is
+what replaces the information we lost when we stopped building the constraint
+into the velocity space.
+
+The important practical point is that Lesson 2 has already done the work for
+(B1). Task 3.C below shows that $\Zsp = \Vdiv \times \Wsp$, which is precisely
+the space on which Lesson 2 established coercivity with
+\[
+  \alpha = \frac{\min(\nu,\ c_{a}+c_{d})}{C_\Om^{2}+1} .
+\]
+So (B1) is already proved, and the whole of the remaining difficulty is (B2).
+
+%==============================================================================
+\section{Reading the inf-sup condition}
+%==============================================================================
+
+The inf-sup condition is the least transparent object in this subject on first
+meeting, so this section takes it apart term by term.
+
+\subsection{Unpacking the notation}
+
+The expression is
+\[
+  \inf_{q \neq 0} \ \sup_{\bv \neq \bzero} \
+  \frac{b(\bv,q)}{\normH{\bv}\,\normL{q}} \ \ge\ \beta .
+\]
+
+Read from the inside out. For a fixed $q$, the inner supremum asks: over all
+possible velocity test functions $\bv$, how large can the quantity
+$b(\bv,q)$ be made, once we normalise by the sizes of $\bv$ and $q$ so that the
+answer does not depend on scaling? Call this number $S(q)$.
+
+The outer infimum then asks: as $q$ ranges over all nonzero pressures, how small
+can $S(q)$ get? The condition demands that it never drops below the fixed
+positive number $\beta$.
+
+Equivalently, and this form is usually easier to work with: for every nonzero
+$q \in \Qsp$ there exists $\bv \in \Vsp$ with
+\begin{equation}\label{eq:infsup-equiv}
+  b(\bv,q) \ \ge\ \beta \normH{\bv}\,\normL{q} .
+\end{equation}
+
+\subsection{What it says in words}
+
+Since $b(\bv,q) = -\int_\Om q \,\dive \bv \dx$, the condition says that
+\emph{every pressure must be visible to some velocity}. For each candidate
+pressure $q$, there has to be a velocity field whose divergence pairs with $q$
+in a nontrivial way.
+
+Suppose instead that some nonzero $q_{0}$ had $b(\bv,q_{0}) = 0$ for every
+$\bv \in \Vsp$. Then $q_{0}$ would not appear anywhere in equation
+\eqref{eq:mixed1}, since that equation only ever sees the pressure through
+$b(\bv,\cdot)$. Consequently, if $\big((\bu,w),p\big)$ were a solution, so would
+$\big((\bu,w),p+q_{0}\big)$ be, and uniqueness would fail. The inf-sup condition
+is what rules this out.
+
+\subsection{Why a uniform constant is needed}
+
+It would be a weaker requirement to ask merely that for each nonzero $q$ there
+exists some $\bv$ with $b(\bv,q) \neq 0$. That is a statement about each $q$
+separately. The inf-sup condition asks for more: a single constant $\beta$ that
+works for all $q$ simultaneously. This is what the word \emph{uniform} means
+here.
+
+The reason the stronger version is needed is as follows. Suppose the weaker
+statement held but no uniform $\beta$ existed. Then there would be a sequence
+$q_{n}$ of pressures, each visible to some velocity, but with
+\[
+  S(q_{n}) \longrightarrow 0 .
+\]
+Each $q_{n}$ is detected by the equations, but progressively more feebly. Now,
+Brezzi's theorem produces a bound on the solution of the form
+\[
+  \normL{p} \le \frac{C}{\beta}\left( \text{data} \right) ,
+\]
+so as $\beta$ degenerates this bound blows up. The map taking the data $F$ to
+the solution $p$ is called the \emph{solution operator}, and to say it is
+\emph{unbounded} is to say that no such finite constant exists: arbitrarily
+small data could produce arbitrarily large pressure. That is a failure of
+stability, and a problem with an unbounded solution operator is not well posed
+in any useful sense, even if a solution technically exists and is unique.
+
+This has a very concrete numerical consequence, which is the subject of Lesson
+4. In the discrete setting the constant $\beta_{h}$ for the finite element
+spaces may degenerate as the mesh is refined, and when it does the computed
+pressure develops large spurious oscillations even though the velocity may look
+perfectly reasonable.
+
+\subsection{Why the pressure space had to be $\Ltwozero$}
+
+Task 3.E below shows that the inf-sup condition fails outright if the pressure
+space is taken to be all of $\Ltwo$, because constant pressures are invisible to
+every velocity in $[\Honezero]^{2}$. Passing to $\Ltwozero$ removes exactly those
+invisible elements, and by the discussion in Remark \ref{rem:quotient} this is
+the same step as fixing the singular matrix in a computation. The abstract
+requirement and the practical fix are two views of one fact.
+
+\subsection{Status of the continuous inf-sup condition}
+
+For the specific form $b(\bv,q) = -\int_\Om q \,\dive \bv \dx$ on
+$[\Honezero]^{2} \times \Ltwozero$, condition (B2) does hold on any bounded
+Lipschitz domain. It is equivalent to the statement that the divergence operator
+has a bounded right inverse: given $q \in \Ltwozero$, there exists
+$\bv \in [\Honezero]^{2}$ with
+\[
+  \dive \bv = q \qquad \text{and} \qquad \normH{\bv} \le C \normL{q} .
+\]
+Constructing such a $\bv$ is a substantial theorem, associated with the names of
+Bogovskii and of Ne\v{c}as. I am citing it, not proving it. Deciding what to
+prove and what to quote is itself part of doing this properly, and this one is
+firmly on the quoting side.
+
+%==============================================================================
+\section{Task 3.C: identifying the kernel}
+%==============================================================================
+
+\begin{proposition}\label{prop:kernel}
+With $\Zsp$ as in Definition \ref{def:kernel},
+\[
+  \Zsp = \Vdiv \times \Wsp .
+\]
+\end{proposition}
+
+Before the proof, note where the difficulty lies. We want to conclude from
+\[
+  \int_\Om q \,\dive \bv \dx = 0 \quad \text{for all } q \in \Qsp
+\]
+that $\dive \bv = 0$. The obvious move is to choose $q = \dive \bv$, which would
+give $\normL{\dive \bv}^{2} = 0$ immediately. But that choice is only legitimate
+if $\dive \bv$ actually belongs to $\Qsp = \Ltwozero$, and membership of
+$\Ltwozero$ requires zero mean, which is not automatic. So the first step of the
+proof must be to check that $\dive \bv$ does have zero mean.
+
+\begin{proof}
+The microrotation component plays no role, since $z$ does not appear in $b$ at
+all. So $(\bv,z) \in \Zsp$ if and only if $z \in \Wsp$ and $b(\bv,q) = 0$ for
+all $q \in \Qsp$. It therefore suffices to show that the latter condition is
+equivalent to $\dive \bv = 0$.
+
+\paragraph{Step 1: $\dive \bv$ has zero mean.}
+Let $\bv \in \Vsp = [\Honezero]^{2}$. By the divergence theorem,
+\[
+  \int_\Om \dive \bv \dx = \int_{\dOm} \bv \cdot \bn \ds .
+\]
+Since $\bv$ has zero trace on $\dOm$, the integrand on the right vanishes
+identically, so
+\begin{equation}\label{eq:divzeromean}
+  \int_\Om \dive \bv \dx = 0 .
+\end{equation}
+Also $\dive \bv \in \Ltwo$, because $\bv \in [\Hone]^{2}$ means each
+$\partial_{i}v_{i} \in \Ltwo$ and a sum of $\Ltwo$ functions is in $\Ltwo$.
+Combining these two facts,
+\[
+  \dive \bv \in \Ltwozero = \Qsp .
+\]
+So $\dive \bv$ is an admissible choice of test function, which is what we needed
+to establish.
+
+\paragraph{Step 2: the forward implication.}
+Suppose $b(\bv,q) = 0$ for all $q \in \Qsp$. By Step 1 we may take
+$q = \dive \bv$, giving
+\[
+  0 = b(\bv, \dive \bv) = -\int_\Om (\dive \bv)(\dive \bv) \dx
+  = - \normL{\dive \bv}^{2} .
+\]
+Hence $\normL{\dive \bv} = 0$, and since $\normL{\cdot}$ is a norm this forces
+$\dive \bv = 0$ as an element of $\Ltwo$, that is, almost everywhere in $\Om$.
+Therefore $\bv \in \Vdiv$.
+
+\paragraph{Step 3: the reverse implication.}
+Conversely, if $\bv \in \Vdiv$ then $\dive \bv = 0$, so for every $q \in \Qsp$
+\[
+  b(\bv,q) = -\int_\Om q \cdot 0 \dx = 0 ,
+\]
+and $(\bv,z) \in \Zsp$ for any $z \in \Wsp$.
+
+Combining Steps 2 and 3 gives $\Zsp = \Vdiv \times \Wsp$.
+\end{proof}
+
+\begin{remark}
+This proposition is what connects the two lessons. Condition (B1) of Brezzi's
+theorem asks for coercivity of $a$ on $\Zsp$, and Proposition \ref{prop:kernel}
+identifies $\Zsp$ as $\Vdiv \times \Wsp$, which is exactly the space on which
+Lesson 2 proved coercivity. So (B1) holds with
+$\alpha = \min(\nu, c_{a}+c_{d})/(C_\Om^{2}+1)$, and nothing from Lesson 2 is
+wasted. The whole of the analysis done there transfers to the mixed setting
+without a single change.
+\end{remark}
+
+%==============================================================================
+\section{Task 3.D: boundedness of $b$}
+%==============================================================================
+
+Brezzi's theorem requires $b$ to be bounded, so we check it. The proof needs one
+small inequality which is worth isolating.
+
+\begin{lemma}\label{lem:divbound}
+For $\bv \in [\Hone]^{2}$,
+\[
+  \normL{\dive \bv} \le \sqrt{2}\, \normL{\grad \bv} .
+\]
+\end{lemma}
+
+\begin{proof}
+Pointwise, $\dive \bv = \partial_{1}v_{1} + \partial_{2}v_{2}$ is a sum of two
+numbers. Apply the Cauchy--Schwarz inequality in $\R^{2}$ to the vectors
+$(1,1)$ and $(\partial_{1}v_{1}, \partial_{2}v_{2})$:
+\[
+  \abs{\partial_{1}v_{1} + \partial_{2}v_{2}}
+  \le \sqrt{1^{2}+1^{2}}\,
+  \sqrt{(\partial_{1}v_{1})^{2} + (\partial_{2}v_{2})^{2}}
+  = \sqrt{2}\,\sqrt{(\partial_{1}v_{1})^{2} + (\partial_{2}v_{2})^{2}} .
+\]
+Squaring and integrating over $\Om$,
+\[
+  \normL{\dive \bv}^{2}
+  \le 2 \int_\Om \left[ (\partial_{1}v_{1})^{2} + (\partial_{2}v_{2})^{2} \right] \dx
+  \le 2 \int_\Om \left[ (\partial_{1}v_{1})^{2} + (\partial_{2}v_{1})^{2}
+  + (\partial_{1}v_{2})^{2} + (\partial_{2}v_{2})^{2} \right] \dx ,
+\]
+the last step being the discard of two non-negative terms, or rather the
+addition of them. The final integral is exactly $\normL{\grad \bv}^{2}$, so
+$\normL{\dive \bv}^{2} \le 2\normL{\grad \bv}^{2}$, and taking square roots
+gives the claim.
+\end{proof}
+
+\begin{remark}
+It is worth noting why Lemma \ref{lem:curldiv} of Lesson 2, which stated
+$\normL{\grad \bv}^{2} = \normL{\curl \bv}^{2} + \normL{\dive \bv}^{2}$ and
+would give the sharper bound $\normL{\dive \bv} \le \normL{\grad \bv}$, is not
+used here. That identity required $\bv \in [\Honezero]^{2}$, because its proof
+used integration by parts twice and needed the boundary terms to vanish. Lemma
+\ref{lem:divbound} makes no use of boundary conditions and holds on all of
+$[\Hone]^{2}$, at the cost of the constant $\sqrt{2}$. Since we will eventually
+want boundedness of $b$ in settings where the boundary conditions may differ,
+the more robust version is the right one to record.
+\end{remark}
+
+\begin{proposition}[Boundedness of $b$]\label{prop:bbounded}
+For all $\bv \in \Vsp$ and $q \in \Qsp$,
+\[
+  \abs{b(\bv,q)} \le \sqrt{2}\, \normH{\bv}\, \normL{q} .
+\]
+\end{proposition}
+
+\begin{proof}
+By the definition \eqref{eq:bdef} and Cauchy--Schwarz in $\Ltwo$,
+\[
+  \abs{b(\bv,q)} = \abs{\int_\Om q \,\dive \bv \dx}
+  \le \normL{q}\,\normL{\dive \bv} .
+\]
+By Lemma \ref{lem:divbound}, $\normL{\dive \bv} \le \sqrt{2}\normL{\grad \bv}$.
+Finally $\normL{\grad \bv} \le \normH{\bv}$, since
+$\normH{\bv}^{2} = \normL{\bv}^{2} + \normL{\grad \bv}^{2}$ and
+$\normL{\bv}^{2} \ge 0$, so discarding a non-negative term gives the inequality.
+Chaining the three estimates,
+\[
+  \abs{b(\bv,q)} \le \normL{q}\,\sqrt{2}\,\normL{\grad \bv}
+  \le \sqrt{2}\,\normH{\bv}\,\normL{q} . \qedhere
+\]
+\end{proof}
+
+%==============================================================================
+\section{Task 3.E: failure of inf-sup on $\Ltwo$}
+%==============================================================================
+
+\begin{proposition}\label{prop:infsupfails}
+Let the pressure space be taken as all of $\Ltwo$ rather than $\Ltwozero$. Then
+the inf-sup condition fails: there is no $\beta > 0$ with
+\[
+  \sup_{\bv \in \Vsp \setminus \{\bzero\}}
+  \frac{b(\bv,q)}{\normH{\bv}\normL{q}} \ge \beta
+  \qquad \text{for all } q \in \Ltwo \setminus \{0\} .
+\]
+\end{proposition}
+
+\begin{proof}
+Take $q \equiv 1$, which is a nonzero element of $\Ltwo$ with
+$\normL{1} = \abs{\Om}^{1/2} > 0$. For any $\bv \in \Vsp = [\Honezero]^{2}$,
+\[
+  b(\bv, 1) = -\int_\Om 1 \cdot \dive \bv \dx = - \int_\Om \dive \bv \dx .
+\]
+By the divergence theorem,
+\[
+  \int_\Om \dive \bv \dx = \int_{\dOm} \bv \cdot \bn \ds = 0 ,
+\]
+since $\bv$ has zero trace on $\dOm$. Hence $b(\bv,1) = 0$ for every
+$\bv \in \Vsp$, and therefore
+\[
+  \sup_{\bv \neq \bzero} \frac{b(\bv,1)}{\normH{\bv}\normL{1}} = 0 .
+\]
+Since $\normL{1} > 0$, no positive $\beta$ can bound this supremum from below.
+\end{proof}
+
+\begin{remark}
+This is the same calculation as Step 1 of Proposition \ref{prop:kernel}, seen
+from the other side. There it showed that $\dive \bv$ automatically has zero
+mean, which was what made the kernel argument work. Here the same fact shows
+that constant pressures are orthogonal to the range of the divergence operator,
+and so are invisible to the formulation.
+
+The two are aspects of one statement: the divergence operator maps
+$[\Honezero]^{2}$ into $\Ltwozero$ and not onto anything larger. Restricting the
+pressure space to $\Ltwozero$ matches the pressure space to the range of the
+operator, which is exactly what the inf-sup condition requires, and it is also
+what removes the singular mode from the discrete matrix as described in Remark
+\ref{rem:quotient}.
+\end{remark}
+
+%==============================================================================
+\section{Summary and what comes next}
+%==============================================================================
+
+\subsection{Where the mixed problem stands}
+
+Collecting the results of this lesson against the hypotheses of Theorem
+\ref{thm:brezzi}:
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Requirement & Status & Reference \\
+\midrule
+$a$ bounded on $\Vsp\times\Wsp$ & proved & Lesson 2, Theorem on boundedness \\
+$b$ bounded & proved & Proposition \ref{prop:bbounded} \\
+Kernel identified as $\Vdiv\times\Wsp$ & proved & Proposition \ref{prop:kernel} \\
+(B1) coercivity on the kernel & proved & Lesson 2, coercivity theorem \\
+(B2) inf-sup condition & quoted & Bogovskii, Ne\v{c}as \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+So the continuous mixed problem is well posed, and every ingredient except the
+inf-sup condition itself was established by our own work.
+
+\subsection{The shape of the argument, in one paragraph}
+
+Enlarging the velocity space from $\Vdiv$ to $\Vsp$ made the problem
+discretisable but destroyed coercivity, because the pressure entered as a
+Lagrange multiplier and multipliers never appear coercively. Brezzi's theorem
+repairs this by weakening the coercivity requirement to hold only on the kernel
+of the constraint, where the original Lesson 2 analysis applies verbatim, and
+adding in exchange a new condition ensuring that no pressure is invisible to the
+velocity space. The zero mean normalisation of the pressure space is not a
+convention but a necessity, since without it the constants form exactly such an
+invisible set.
+
+\subsection{What comes next}
+
+Everything in this lesson concerned the continuous problem. The next lesson
+concerns the discrete one, and the central point is that condition (B2) does
+\emph{not} pass automatically to finite element subspaces. Choosing
+$\Vsp_{h} \subset \Vsp$ and $\Qsp_{h} \subset \Qsp$ gives a discrete inf-sup
+constant $\beta_{h}$ which may be small, or may degenerate as the mesh is
+refined, even though the continuous $\beta$ is perfectly good.
+
+This is the reason that equal order elements such as $P_{1}/P_{1}$ fail for
+Stokes, producing the characteristic checkerboard pressure oscillation, and the
+reason the Taylor--Hood pair $P_{2}/P_{1}$ is used instead. That is Lesson 4.
+
+\end{document}
