@@ -276,6 +276,7 @@ micropolar-fem/
 │   └── diagnostics.py     error norms and convergence rates
 ├── tests/                 pytest suite, asserts rates rather than plotting them
 ├── scripts/               convergence tables and the parameter study
+├── figures/               Convergence figures
 └── docs/notes/            five LaTeX documents with the full analysis
 ```
 
