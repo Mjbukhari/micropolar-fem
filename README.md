@@ -20,6 +20,7 @@ rates match the theory.
 | Stokes | P2/P1 Taylor–Hood | 3.00, 2.00 (velocity), 2.06 (pressure) |
 | Micropolar | P2/P1/P2 | 3.00, 2.00, 2.06, 3.05, 2.00 |
 
+![Convergence](figures/convergence.png)
 A parameter study over six orders of magnitude in the vortex viscosity then
 tested two predictions of the analysis. **The first was confirmed. The second
 was found to be sharp in one component and loose in another**, for a reason that
