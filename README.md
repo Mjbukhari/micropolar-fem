@@ -35,11 +35,11 @@ microstructure carries independent rotational degrees of freedom. It is used for
 blood, ferrofluids, liquid crystals, and lubricants with additives. In two
 dimensions the stationary linearised system is
 
-$$-(\nu + \nu_r)\,\Delta \mathbf{u} + \nabla p = 2\nu_r \nabla^{\perp} w + \mathbf{f}$$
+$$-(\nu + \nu_r)\ \Delta \mathbf{u} + \nabla p = 2\nu_r \nabla^{\perp} w + \mathbf{f}$$
 
 $$\nabla \cdot \mathbf{u} = 0$$
 
-$$-(c_a + c_d)\,\Delta w + 4\nu_r w = 2\nu_r \mathrm{curl}\,\mathbf{u} + g$$
+$$-(c_a + c_d)\ \Delta w + 4\nu_r w = 2\nu_r \mathrm{curl}\ \mathbf{u} + g$$
 
 with no-slip conditions on the velocity and homogeneous Dirichlet conditions on
 the microrotation. The unknowns are velocity, pressure, and the scalar
